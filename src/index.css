@@ -1,0 +1,90 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: #0a0f1a;
+  color: #e2e8f0;
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 3px;
+  background: #1e293b;
+  outline: none;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #22d3ee;
+  border: 2px solid #0a0f1a;
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(34, 211, 238, 0.4);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #22d3ee;
+  border: 2px solid #0a0f1a;
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(34, 211, 238, 0.4);
+}
+
+input[type="number"] {
+  outline: none;
+}
+
+input[type="number"]:focus {
+  border-color: #22d3ee !important;
+  box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.2);
+}
+
+select {
+  outline: none;
+  cursor: pointer;
+}
+
+select:focus {
+  border-color: #22d3ee !important;
+  box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.2);
+}
+
+button {
+  font-family: inherit;
+}
+
+button:hover {
+  opacity: 0.85;
+}
+
+/* Hide scrollbar on tab nav */
+nav::-webkit-scrollbar {
+  display: none;
+}
+
+/* Smooth transitions globally */
+* {
+  transition-property: background-color, border-color, color, box-shadow;
+  transition-duration: 0.15s;
+  transition-timing-function: ease;
+}
