@@ -68,6 +68,7 @@ const TABS = [
 export default function App() {
   const [tab, setTab] = useState("overview");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
 
   // ─── Editable compensation parameters ───
   const [physRate, setPhysRate] = useState(DOC.physCompRate);
@@ -255,17 +256,17 @@ export default function App() {
   // ──────────────────────────────────────────────────────────────────────
   return (
     <div style={{
-      "--c-bg": "#0a0f1a",
-      "--c-card": "#111827",
-      "--c-surface": "#1a2236",
-      "--c-border": "#1e293b",
-      "--c-text": "#e2e8f0",
-      "--c-text-dim": "#94a3b8",
-      "--c-accent": "#22d3ee",
-      "--c-accent2": "#a78bfa",
-      "--c-accent3": "#34d399",
-      "--c-danger": "#f87171",
-      "--c-warn": "#fbbf24",
+      "--c-bg":       darkMode ? "#0a0f1a"  : "#f8fafc",
+      "--c-card":     darkMode ? "#111827"  : "#ffffff",
+      "--c-surface":  darkMode ? "#1a2236"  : "#f1f5f9",
+      "--c-border":   darkMode ? "#1e293b"  : "#e2e8f0",
+      "--c-text":     darkMode ? "#e2e8f0"  : "#0f172a",
+      "--c-text-dim": darkMode ? "#94a3b8"  : "#64748b",
+      "--c-accent":   darkMode ? "#22d3ee"  : "#0891b2",
+      "--c-accent2":  darkMode ? "#a78bfa"  : "#7c3aed",
+      "--c-accent3":  darkMode ? "#34d399"  : "#059669",
+      "--c-danger":   darkMode ? "#f87171"  : "#dc2626",
+      "--c-warn":     darkMode ? "#fbbf24"  : "#d97706",
       "--ff-body": "'DM Sans', 'Segoe UI', sans-serif",
       "--ff-mono": "'JetBrains Mono', 'SF Mono', 'Fira Code', monospace",
       "--ff-display": "'Space Grotesk', 'DM Sans', sans-serif",
@@ -280,14 +281,16 @@ export default function App() {
 
       {/* HEADER */}
       <header style={{
-        background: "linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)",
+        background: darkMode
+          ? "linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)"
+          : "linear-gradient(135deg, #e0f2fe 0%, #ede9fe 50%, #e0f2fe 100%)",
         borderBottom: "1px solid var(--c-border)", padding: "16px 20px",
         display: "flex", alignItems: "center", justifyContent: "space-between",
         position: "sticky", top: 0, zIndex: 100, backdropFilter: "blur(12px)"
       }}>
         <div>
           <h1 style={{ fontSize: 18, fontWeight: 800, fontFamily: "var(--ff-display)", margin: 0, letterSpacing: -0.5 }}>
-            <span style={{ color: "var(--c-accent)" }}>IU</span> Ophth Comp Model
+            Ophthalmology Comp Model
           </h1>
           <div style={{ fontSize: 11, color: "var(--c-text-dim)", marginTop: 2 }}>
             {DOC.division} · FY{DOC.year} · Individual Productivity Plan
@@ -324,12 +327,100 @@ export default function App() {
       {/* CONTENT */}
       <main style={{ padding: "20px 16px", maxWidth: 1200, margin: "0 auto" }}>
 
+        {/* DISCLAIMER BANNER */}
+        <div style={{
+          marginBottom: 20, padding: "12px 16px",
+          background: darkMode ? "rgba(251,191,36,.08)" : "#fffbeb",
+          border: `1px solid ${darkMode ? "rgba(251,191,36,.3)" : "#fcd34d"}`,
+          borderLeft: "4px solid var(--c-warn)",
+          borderRadius: 8, fontSize: 12, lineHeight: 1.7,
+          color: "var(--c-text)"
+        }}>
+          <span style={{ fontWeight: 700, color: "var(--c-warn)", marginRight: 6 }}>FOR INFORMATIONAL AND PLANNING PURPOSES ONLY</span>
+          — This tool provides estimates based on compensation plan parameters. Figures shown are projections and do not constitute a contract, guarantee, or offer of compensation. Actual compensation is subject to plan terms, institutional policy, and individual performance verification. Consult your department administrator for authoritative figures.
+        </div>
+
         {/* ═══════════════ OVERVIEW TAB ═══════════════ */}
         {tab === "overview" && (
           <div>
             <h2 style={{ fontSize: 20, fontWeight: 800, fontFamily: "var(--ff-display)", marginBottom: 20 }}>
               Plan Structure & Extracted Parameters
             </h2>
+
+            {/* ── TOP ROW: Comp Equation + Waterfall side-by-side ── */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: 16, marginBottom: 16 }}>
+
+              {/* Total Compensation Equation */}
+              <Card title="Total Compensation Equation" accent="var(--c-accent)">
+                {/* Live total display */}
+                <div style={{
+                  marginBottom: 16, padding: "14px 16px", borderRadius: 10,
+                  background: darkMode
+                    ? "linear-gradient(135deg, rgba(8,145,178,.15), rgba(124,58,237,.15))"
+                    : "linear-gradient(135deg, rgba(8,145,178,.08), rgba(124,58,237,.08))",
+                  border: "1px solid var(--c-accent)",
+                  display: "flex", justifyContent: "space-between", alignItems: "center"
+                }}>
+                  <span style={{ fontWeight: 700, fontSize: 15, letterSpacing: 0.5 }}>TOTAL COMPENSATION</span>
+                  <span style={{ fontFamily: "var(--ff-mono)", fontWeight: 800, fontSize: 28, color: "var(--c-accent)" }}>{fmt(comp.total)}</span>
+                </div>
+
+                {/* Color-coded terms */}
+                <div style={{ display: "grid", gap: 6, marginBottom: 14 }}>
+                  {[
+                    { label: "Productivity (wRVU × Rate)", val: comp.productivity, color: "var(--c-accent)", detail: `${fmtN(annualWRVU)} wRVU × ${fmt2(comp.rate)}/wRVU` },
+                    { label: "Academic Rank Pay × FTE", val: comp.academicPay, color: "var(--c-accent2)", detail: `${rank} · ${fte} FTE` },
+                    { label: "Chair Lever Pay", val: comp.leverPay, color: "var(--c-warn)", detail: "19% pool / 3 levers / pool physicians" },
+                    { label: "Call Pay", val: comp.callPay, color: "var(--c-accent3)", detail: `${callWeeks} wk ${callType} call` },
+                    { label: "Quality Pay", val: comp.qualityPerPhys, color: "#818cf8", detail: "pool ÷ physicians (estimated)" },
+                    { label: "Cosmetic Comp", val: comp.cosmeticNet, color: "var(--c-danger)", detail: "70% collections − consumables" },
+                  ].map((r, i) => (
+                    <div key={i} style={{
+                      display: "flex", alignItems: "center", gap: 10,
+                      padding: "6px 10px", borderRadius: 7, background: "var(--c-surface)"
+                    }}>
+                      <div style={{ width: 10, height: 10, borderRadius: 3, background: r.color, flexShrink: 0 }} />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 12, fontWeight: 600 }}>{r.label}</div>
+                        <div style={{ fontSize: 11, color: "var(--c-text-dim)", fontFamily: "var(--ff-mono)" }}>{r.detail}</div>
+                      </div>
+                      <span style={{ fontFamily: "var(--ff-mono)", fontWeight: 700, fontSize: 13, color: r.color, whiteSpace: "nowrap" }}>{fmt(r.val)}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Rate derivation */}
+                <div style={{ padding: "10px 12px", background: "var(--c-surface)", borderRadius: 8, fontSize: 11, color: "var(--c-text-dim)", fontFamily: "var(--ff-mono)", lineHeight: 1.9 }}>
+                  <strong style={{ color: "var(--c-text)" }}>Rate derivation:</strong><br />
+                  Phys Rate = Overall − (Quality + AI + Dept RAO + Div RAO) × Overall<br />
+                  = {fmt2(overallRate)} × (1 − {qualityPct}% − {aiPct}% − {deptRaoPct}% − {divRaoPct}%)<br />
+                  = <strong style={{ color: "var(--c-accent)" }}>{fmt2(rateWaterfall.physRate)}/wRVU</strong>
+                </div>
+              </Card>
+
+              {/* Compensation Waterfall */}
+              <Card title="Compensation Waterfall" accent="var(--c-accent2)">
+                <div style={{ marginBottom: 8, fontSize: 12, color: "var(--c-text-dim)" }}>
+                  Stacked contribution of each component toward total compensation
+                </div>
+                <WaterfallChart comp={comp} />
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 14px", marginTop: 10 }}>
+                  {[
+                    { label: "Productivity", color: "var(--c-accent)" },
+                    { label: "Academic", color: "var(--c-accent2)" },
+                    { label: "Chair Lever", color: "var(--c-warn)" },
+                    { label: "Call Pay", color: "var(--c-accent3)" },
+                    { label: "Quality", color: "#818cf8" },
+                    { label: "Cosmetic", color: "var(--c-danger)" },
+                  ].map((l, i) => (
+                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "var(--c-text-dim)" }}>
+                      <div style={{ width: 8, height: 8, borderRadius: 2, background: l.color }} />
+                      {l.label}
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            </div>
 
             {/* Rate Waterfall */}
             <Card title="wRVU Rate Waterfall" accent="var(--c-accent)">
@@ -346,7 +437,7 @@ export default function App() {
                   <div key={i} style={{
                     display: "flex", justifyContent: "space-between", alignItems: "center",
                     padding: "8px 12px", borderRadius: 8,
-                    background: r.bold ? "rgba(34,211,238,.08)" : "transparent",
+                    background: r.bold ? "rgba(8,145,178,.08)" : "transparent",
                     borderBottom: r.bold ? "none" : "1px solid var(--c-border)"
                   }}>
                     <span style={{ fontSize: 13, color: r.bold ? "var(--c-text)" : "var(--c-text-dim)" }}>{r.label}</span>
@@ -366,91 +457,185 @@ export default function App() {
               </div>
             </Card>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16, marginTop: 16 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16, marginTop: 16 }}>
               {/* Academic Rank Pay */}
               <Card title="Academic Rank Pay" accent="var(--c-accent2)">
-                <div style={{ display: "grid", gap: 6 }}>
+                <p style={{ fontSize: 12, color: "var(--c-text-dim)", lineHeight: 1.7, marginBottom: 12 }}>
+                  Academic rank compensation recognizes scholarly achievement and career progression. It is an annual fixed stipend paid on top of productivity-based compensation and prorated by clinical FTE. Promotion to Associate or Full Professor reflects demonstrated excellence in teaching, research, and/or service beyond clinical duties.
+                </p>
+                <div style={{ display: "grid", gap: 6, marginBottom: 10 }}>
                   {[
-                    { rank: "Assistant Professor", val: "$0" },
-                    { rank: "Associate Professor", val: "$15,000" },
-                    { rank: "Professor", val: "$30,000" },
+                    { rank: "Assistant Professor", val: "$0", note: "Base academic rank" },
+                    { rank: "Associate Professor", val: "$15,000", note: "Mid-career academic achievement" },
+                    { rank: "Professor", val: "$30,000", note: "Sustained academic leadership & scholarship" },
                   ].map((r, i) => (
-                    <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid var(--c-border)", fontSize: 13 }}>
-                      <span>{r.rank}</span>
-                      <span style={{ fontFamily: "var(--ff-mono)", fontWeight: 600 }}>{r.val}</span>
+                    <div key={i} style={{ padding: "8px 10px", borderRadius: 7, background: "var(--c-surface)", borderBottom: "none" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
+                        <span style={{ fontSize: 13, fontWeight: 600 }}>{r.rank}</span>
+                        <span style={{ fontFamily: "var(--ff-mono)", fontWeight: 700, color: "var(--c-accent2)" }}>{r.val}</span>
+                      </div>
+                      <div style={{ fontSize: 11, color: "var(--c-text-dim)" }}>{r.note}</div>
                     </div>
                   ))}
                 </div>
-                <div style={{ fontSize: 11, color: "var(--c-text-dim)", marginTop: 8 }}>Prorated by clinical FTE status</div>
+                <div style={{ fontSize: 11, color: "var(--c-text-dim)", padding: "6px 10px", background: "var(--c-surface)", borderRadius: 6, fontFamily: "var(--ff-mono)" }}>
+                  Prorated by FTE · Example: 0.5 FTE Associate = $7,500/yr
+                </div>
               </Card>
 
               {/* Call Pay */}
               <Card title="Call Pay Schedule" accent="var(--c-accent3)">
-                <div style={{ marginBottom: 10 }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: "var(--c-accent3)", marginBottom: 4 }}>General Call</div>
+                <p style={{ fontSize: 12, color: "var(--c-text-dim)", lineHeight: 1.7, marginBottom: 12 }}>
+                  Call compensation covers attending physician availability outside normal clinic hours. General call covers the full ophthalmology service including consults, trauma, and urgent cases. Retina call is a separate subspecialty-specific coverage arrangement. Partial weeks are compensated by the individual day.
+                </p>
+                <div style={{ marginBottom: 12 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "var(--c-accent3)", marginBottom: 6 }}>General Call — Full Ophthalmology Service</div>
                   <div style={{ display: "grid", gap: 4, fontSize: 13 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between" }}><span>Full week</span><span style={{ fontFamily: "var(--ff-mono)" }}>$5,000</span></div>
-                    <div style={{ display: "flex", justifyContent: "space-between" }}><span>Per weekday</span><span style={{ fontFamily: "var(--ff-mono)" }}>$600</span></div>
-                    <div style={{ display: "flex", justifyContent: "space-between" }}><span>Per weekend day</span><span style={{ fontFamily: "var(--ff-mono)" }}>$1,000</span></div>
+                    <div style={{ display: "flex", justifyContent: "space-between", padding: "5px 8px", borderRadius: 6, background: "var(--c-surface)" }}>
+                      <span>Full week <span style={{ fontSize: 11, color: "var(--c-text-dim)" }}>(Sun–Sat continuous)</span></span>
+                      <span style={{ fontFamily: "var(--ff-mono)", fontWeight: 700 }}>$5,000</span>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", padding: "5px 8px", borderRadius: 6, background: "var(--c-surface)" }}>
+                      <span>Per weekday <span style={{ fontSize: 11, color: "var(--c-text-dim)" }}>(4pm–8am)</span></span>
+                      <span style={{ fontFamily: "var(--ff-mono)", fontWeight: 700 }}>$600</span>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", padding: "5px 8px", borderRadius: 6, background: "var(--c-surface)" }}>
+                      <span>Per weekend day <span style={{ fontSize: 11, color: "var(--c-text-dim)" }}>(8am–8pm)</span></span>
+                      <span style={{ fontFamily: "var(--ff-mono)", fontWeight: 700 }}>$1,000</span>
+                    </div>
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: "var(--c-accent2)", marginBottom: 4 }}>Retina Call</div>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}><span>Full week</span><span style={{ fontFamily: "var(--ff-mono)" }}>$1,572.55</span></div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "var(--c-accent2)", marginBottom: 6 }}>Retina Call — Subspecialty Coverage</div>
+                  <div style={{ display: "flex", justifyContent: "space-between", padding: "5px 8px", borderRadius: 6, background: "var(--c-surface)", fontSize: 13 }}>
+                    <span>Full week</span>
+                    <span style={{ fontFamily: "var(--ff-mono)", fontWeight: 700 }}>$1,572.55</span>
+                  </div>
                 </div>
-                <div style={{ fontSize: 11, color: "var(--c-text-dim)", marginTop: 8 }}>Weekend: 8am-8pm · Weekday: 4pm-8am</div>
               </Card>
 
-              {/* Chair Levers */}
-              <Card title="Chair Lever Metrics" accent="var(--c-warn)">
-                <div style={{ fontSize: 13, marginBottom: 8 }}>19% of Pool allocated across 3 levers</div>
-                <div style={{ display: "grid", gap: 4 }}>
-                  {["Education", "Research", "Service/Citizenship"].map((l, i) => (
-                    <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", fontSize: 13, borderBottom: "1px solid var(--c-border)" }}>
-                      <span>Lever {i + 1}: {l}</span>
-                      <span style={{ fontFamily: "var(--ff-mono)", fontSize: 12 }}>Score 1-5</span>
-                    </div>
-                  ))}
-                </div>
-                <div style={{ fontSize: 11, color: "var(--c-text-dim)", marginTop: 8 }}>1 = Exceptional · 5 = Little/No Contribution</div>
-              </Card>
-
-              {/* Cosmetic */}
+              {/* Cosmetic Comp */}
               <Card title="Cosmetic Comp" accent="var(--c-danger)">
-                <div style={{ fontSize: 13, lineHeight: 1.7 }}>
-                  70% of collections after 30% admin fee<br />
-                  Consumable expenses deducted after admin fee<br />
-                  <span style={{ fontFamily: "var(--ff-mono)", fontSize: 12, color: "var(--c-text-dim)" }}>
-                    Phys Comp = (Collections × 0.70) − Consumables
-                  </span>
+                <p style={{ fontSize: 12, color: "var(--c-text-dim)", lineHeight: 1.7, marginBottom: 12 }}>
+                  Cosmetic procedures are not covered by standard insurance and generate direct patient collections. The department retains a 30% administrative fee to cover overhead, scheduling, and facility costs. The physician receives 70% of collections, with consumable supply expenses deducted thereafter. This creates direct alignment between cosmetic revenue and physician compensation.
+                </p>
+                <div style={{ padding: "10px 12px", background: "var(--c-surface)", borderRadius: 8, fontFamily: "var(--ff-mono)", fontSize: 12, lineHeight: 2 }}>
+                  <div><span style={{ color: "var(--c-text-dim)" }}>Admin fee retained:</span> <strong style={{ color: "var(--c-danger)" }}>30%</strong></div>
+                  <div><span style={{ color: "var(--c-text-dim)" }}>Physician net collections:</span> <strong>70%</strong></div>
+                  <div style={{ borderTop: "1px solid var(--c-border)", marginTop: 6, paddingTop: 6 }}>
+                    <strong style={{ color: "var(--c-accent)" }}>Phys Comp</strong> = (Collections × 0.70) − Consumables
+                  </div>
                 </div>
               </Card>
 
-              {/* Quality */}
+              {/* Quality Pay */}
               <Card title="Quality Pay" accent="var(--c-accent)">
-                <div style={{ fontSize: 13, lineHeight: 1.7 }}>
-                  Variable pool based on IUHMG metrics<br />
-                  ⅓ distributed by FTE · ⅔ by year-end RVU production<br />
-                  Must have no unsigned notes to be eligible
+                <p style={{ fontSize: 12, color: "var(--c-text-dim)", lineHeight: 1.7, marginBottom: 12 }}>
+                  Quality pay is drawn from a variable annual pool funded based on departmental performance on quality benchmarks — including patient satisfaction scores, care process adherence metrics, and operational efficiency measures. Eligibility requires timely clinical documentation; any unsigned notes at the time of distribution disqualify a physician from that cycle's distribution.
+                </p>
+                <div style={{ display: "grid", gap: 6 }}>
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "7px 10px", background: "var(--c-surface)", borderRadius: 7 }}>
+                    <div style={{ width: 8, height: 8, borderRadius: 2, background: "var(--c-accent)", flexShrink: 0, marginTop: 4 }} />
+                    <div style={{ fontSize: 12 }}><strong>⅓</strong> <span style={{ color: "var(--c-text-dim)" }}>distributed equally by FTE status</span></div>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "7px 10px", background: "var(--c-surface)", borderRadius: 7 }}>
+                    <div style={{ width: 8, height: 8, borderRadius: 2, background: "var(--c-accent2)", flexShrink: 0, marginTop: 4 }} />
+                    <div style={{ fontSize: 12 }}><strong>⅔</strong> <span style={{ color: "var(--c-text-dim)" }}>distributed proportionally by year-end wRVU production relative to pool peers</span></div>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "7px 10px", background: darkMode ? "rgba(220,38,38,.1)" : "#fef2f2", borderRadius: 7, border: "1px solid rgba(220,38,38,.2)" }}>
+                    <div style={{ width: 8, height: 8, borderRadius: 2, background: "var(--c-danger)", flexShrink: 0, marginTop: 4 }} />
+                    <div style={{ fontSize: 12, color: "var(--c-danger)" }}><strong>Eligibility:</strong> No unsigned clinical notes at time of distribution</div>
+                  </div>
                 </div>
               </Card>
 
-              {/* Comp Equation */}
-              <Card title="Total Compensation Equation" accent="var(--c-accent)" style={{ gridColumn: "1 / -1" }}>
-                <div style={{
-                  fontFamily: "var(--ff-mono)", fontSize: 13, lineHeight: 2,
-                  padding: 16, background: "var(--c-surface)", borderRadius: 8
-                }}>
-                  <strong style={{ color: "var(--c-accent)" }}>Total Compensation =</strong><br />
-                  &nbsp;&nbsp;(Annual wRVU × Phys Comp Rate)<br />
-                  &nbsp;&nbsp;+ Academic Rank Pay × FTE<br />
-                  &nbsp;&nbsp;+ Chair Lever Pay<br />
-                  &nbsp;&nbsp;+ Call Pay<br />
-                  &nbsp;&nbsp;+ Quality Pay<br />
-                  &nbsp;&nbsp;+ Cosmetic Comp (if applicable)<br /><br />
-                  <strong style={{ color: "var(--c-text-dim)" }}>Where:</strong><br />
-                  &nbsp;&nbsp;Phys Comp Rate = Overall Rate × (1 − Quality% − AI% − Dept RAO% − Div RAO%)<br />
-                  &nbsp;&nbsp;= {fmt2(overallRate)} × (1 − {qualityPct + aiPct + deptRaoPct + divRaoPct}%) = <strong style={{ color: "var(--c-accent)" }}>{fmt2(rateWaterfall.physRate)}/wRVU</strong>
+              {/* Chair Lever Metrics — detailed rubric, full width */}
+              <Card title="Chair Lever Metrics" accent="var(--c-warn)" style={{ gridColumn: "1 / -1" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 16, marginBottom: 16 }}>
+                  <div>
+                    <p style={{ fontSize: 12, color: "var(--c-text-dim)", lineHeight: 1.7 }}>
+                      The chair retains <strong style={{ color: "var(--c-warn)" }}>19% of the compensation pool</strong> to be allocated across three academic mission levers: Education, Research, and Service/Citizenship. Each lever receives one-third of the 19% pool. The chair assigns each physician a score of 1–5 per lever; higher scores reduce payout. Compensation is divided equally among pool physicians.
+                    </p>
+                    <div style={{ marginTop: 10, padding: "10px 12px", background: "var(--c-surface)", borderRadius: 8, fontFamily: "var(--ff-mono)", fontSize: 12, lineHeight: 1.9 }}>
+                      <div><strong style={{ color: "var(--c-text)" }}>Per-lever share</strong> = (5 − score) ÷ 4 × (Pool × 19% ÷ 3)</div>
+                      <div style={{ color: "var(--c-text-dim)", marginTop: 4 }}>
+                        Score 1 → 100% · Score 2 → 75% · Score 3 → 50% · Score 4 → 25% · Score 5 → 0%
+                      </div>
+                      <div style={{ borderTop: "1px solid var(--c-border)", marginTop: 6, paddingTop: 6 }}>
+                        <strong style={{ color: "var(--c-accent)" }}>Phys Pay</strong> = sum of 3 lever shares ÷ pool physicians
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ display: "grid", gap: 6 }}>
+                    {[
+                      { score: 1, label: "Exceptional", bg: darkMode ? "rgba(5,150,105,.15)" : "#f0fdf4", border: "rgba(5,150,105,.4)", color: "#059669" },
+                      { score: 2, label: "Above Expectations", bg: darkMode ? "rgba(8,145,178,.1)" : "#f0f9ff", border: "rgba(8,145,178,.3)", color: "var(--c-accent)" },
+                      { score: 3, label: "Meets Expectations", bg: "var(--c-surface)", border: "var(--c-border)", color: "var(--c-text-dim)" },
+                      { score: 4, label: "Below Expectations", bg: darkMode ? "rgba(217,119,6,.1)" : "#fffbeb", border: "rgba(217,119,6,.3)", color: "var(--c-warn)" },
+                      { score: 5, label: "Little/No Contribution", bg: darkMode ? "rgba(220,38,38,.1)" : "#fef2f2", border: "rgba(220,38,38,.3)", color: "var(--c-danger)" },
+                    ].map(s => (
+                      <div key={s.score} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 10px", borderRadius: 7, background: s.bg, border: `1px solid ${s.border}` }}>
+                        <span style={{ fontFamily: "var(--ff-mono)", fontWeight: 800, fontSize: 16, color: s.color, minWidth: 20, textAlign: "center" }}>{s.score}</span>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: s.color }}>{s.label}</span>
+                        <span style={{ fontSize: 11, color: "var(--c-text-dim)", marginLeft: "auto", fontFamily: "var(--ff-mono)" }}>{((5 - s.score) / 4 * 100).toFixed(0)}% of lever</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Scoring rubric table */}
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                    <thead>
+                      <tr style={{ background: "var(--c-surface)" }}>
+                        <th style={{ padding: "8px 12px", textAlign: "left", fontWeight: 700, color: "var(--c-text-dim)", textTransform: "uppercase", fontSize: 10, letterSpacing: 1, width: 60, borderBottom: "2px solid var(--c-border)" }}>Score</th>
+                        <th style={{ padding: "8px 12px", textAlign: "left", fontWeight: 700, color: "var(--c-accent2)", textTransform: "uppercase", fontSize: 10, letterSpacing: 1, borderBottom: "2px solid var(--c-border)" }}>Education</th>
+                        <th style={{ padding: "8px 12px", textAlign: "left", fontWeight: 700, color: "var(--c-accent3)", textTransform: "uppercase", fontSize: 10, letterSpacing: 1, borderBottom: "2px solid var(--c-border)" }}>Research</th>
+                        <th style={{ padding: "8px 12px", textAlign: "left", fontWeight: 700, color: "var(--c-warn)", textTransform: "uppercase", fontSize: 10, letterSpacing: 1, borderBottom: "2px solid var(--c-border)" }}>Service / Citizenship</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        {
+                          score: 1,
+                          edu: "Program or course director; substantial medical education leadership; peer-reviewed educational scholarship",
+                          research: "Active funded research program; multiple peer-reviewed publications; extramural grants",
+                          service: "Major committee chair at institutional or national level; significant mentorship program; departmental leadership role",
+                        },
+                        {
+                          score: 2,
+                          edu: "Regular teaching at all trainee levels; curriculum development contributions; active clinical mentoring",
+                          research: "Active research participation; publications as primary or contributing author; active IRB protocols",
+                          service: "Active committee membership; departmental service beyond requirements; peer and student mentoring",
+                        },
+                        {
+                          score: 3,
+                          edu: "Participates in scheduled didactic sessions and required teaching activities",
+                          research: "Some research involvement; contributing author on departmental projects",
+                          service: "Meets basic service requirements; attends required departmental meetings",
+                        },
+                        {
+                          score: 4,
+                          edu: "Minimal teaching beyond required clinical encounters",
+                          research: "Minimal research activity; occasional involvement only",
+                          service: "Minimal participation beyond the required minimum",
+                        },
+                        {
+                          score: 5,
+                          edu: "Does not participate in educational activities",
+                          research: "No active research involvement",
+                          service: "Does not participate in service or citizenship activities",
+                        },
+                      ].map((row, i) => (
+                        <tr key={row.score} style={{ borderBottom: "1px solid var(--c-border)", background: i % 2 === 0 ? "transparent" : "var(--c-surface)" }}>
+                          <td style={{ padding: "10px 12px", fontFamily: "var(--ff-mono)", fontWeight: 800, fontSize: 15, color: ["#059669","var(--c-accent)","var(--c-text-dim)","var(--c-warn)","var(--c-danger)"][i], verticalAlign: "top" }}>{row.score}</td>
+                          <td style={{ padding: "10px 12px", color: "var(--c-text)", lineHeight: 1.6, verticalAlign: "top" }}>{row.edu}</td>
+                          <td style={{ padding: "10px 12px", color: "var(--c-text)", lineHeight: 1.6, verticalAlign: "top" }}>{row.research}</td>
+                          <td style={{ padding: "10px 12px", color: "var(--c-text)", lineHeight: 1.6, verticalAlign: "top" }}>{row.service}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </Card>
             </div>
@@ -930,11 +1115,32 @@ export default function App() {
       </main>
 
       <footer style={{
-        borderTop: "1px solid var(--c-border)", padding: "12px 20px", textAlign: "center",
-        fontSize: 11, color: "var(--c-text-dim)"
+        borderTop: "1px solid var(--c-border)", padding: "16px 20px", textAlign: "center",
+        fontSize: 11, color: "var(--c-text-dim)", lineHeight: 1.8
       }}>
-        IU Health Ophthalmology Compensation Model · FY2026 · All values from plan document · For reference only
+        <div>Ophthalmology Compensation Model · FY{DOC.year} · For planning reference only · Values derived from plan document parameters</div>
+        <div style={{ marginTop: 4, fontWeight: 600, color: "var(--c-warn)" }}>
+          Not a binding compensation agreement · Consult your department administrator for authoritative figures
+        </div>
       </footer>
+
+      {/* Dark/Light mode toggle — fixed bottom right */}
+      <button
+        onClick={() => setDarkMode(d => !d)}
+        title={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+        style={{
+          position: "fixed", bottom: 24, right: 24, zIndex: 200,
+          width: 48, height: 48, borderRadius: 24,
+          background: darkMode ? "#1e293b" : "#ffffff",
+          border: `2px solid ${darkMode ? "#334155" : "#cbd5e1"}`,
+          boxShadow: "0 4px 16px rgba(0,0,0,0.18)",
+          cursor: "pointer", fontSize: 20, display: "flex",
+          alignItems: "center", justifyContent: "center",
+          transition: "background .2s, border-color .2s, box-shadow .2s",
+        }}
+      >
+        {darkMode ? "☀️" : "🌙"}
+      </button>
     </div>
   );
 }
