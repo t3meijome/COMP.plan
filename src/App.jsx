@@ -398,66 +398,61 @@ export default function App() {
                 </div>
               </Card>
 
-              {/* Compensation Waterfall */}
-              <Card title="Compensation Waterfall" accent="var(--c-accent2)">
+              {/* Compensation Sankey */}
+              <Card title="Compensation Breakdown" accent="var(--c-accent2)">
                 <div style={{ marginBottom: 8, fontSize: 12, color: "var(--c-text-dim)" }}>
-                  Stacked contribution of each component toward total compensation
+                  Each component flows into total compensation
                 </div>
-                <WaterfallChart comp={comp} />
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 14px", marginTop: 10 }}>
-                  {[
-                    { label: "Productivity", color: "var(--c-accent)" },
-                    { label: "Academic", color: "var(--c-accent2)" },
-                    { label: "Chair Lever", color: "var(--c-warn)" },
-                    { label: "Call Pay", color: "var(--c-accent3)" },
-                    { label: "Quality", color: "#818cf8" },
-                    { label: "Cosmetic", color: "var(--c-danger)" },
-                  ].map((l, i) => (
-                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "var(--c-text-dim)" }}>
-                      <div style={{ width: 8, height: 8, borderRadius: 2, background: l.color }} />
-                      {l.label}
-                    </div>
-                  ))}
-                </div>
+                <CompSankeyChart comp={comp} />
               </Card>
             </div>
 
             {/* Rate Waterfall */}
             <Card title="wRVU Rate Waterfall" accent="var(--c-accent)">
-              <div style={{ display: "grid", gap: 8 }}>
-                {[
-                  { label: "Overall Rate", val: fmt2(overallRate), pct: "", color: "var(--c-text)" },
-                  { label: "Quality Adjustment", val: `(${fmt2(overallRate * qualityPct / 100)})`, pct: `${qualityPct}%`, color: "var(--c-danger)" },
-                  { label: "Total Rate", val: fmt2(overallRate - overallRate * qualityPct / 100), pct: "", color: "var(--c-text)", bold: true },
-                  { label: "AI (Academic Incentive)", val: `(${fmt2(overallRate * aiPct / 100)})`, pct: `${aiPct}%`, color: "var(--c-danger)" },
-                  { label: "Dept RAO", val: `(${fmt2(overallRate * deptRaoPct / 100)})`, pct: `${deptRaoPct}%`, color: "var(--c-danger)" },
-                  { label: "Div RAO", val: `(${fmt2(overallRate * divRaoPct / 100)})`, pct: `${divRaoPct}%`, color: "var(--c-text-dim)" },
-                  { label: "Physician Comp Rate", val: fmt2(rateWaterfall.physRate), pct: "", color: "var(--c-accent)", bold: true },
-                ].map((r, i) => (
-                  <div key={i} style={{
-                    display: "flex", justifyContent: "space-between", alignItems: "center",
-                    padding: "8px 12px", borderRadius: 8,
-                    background: r.bold ? "rgba(8,145,178,.08)" : "transparent",
-                    borderBottom: r.bold ? "none" : "1px solid var(--c-border)"
-                  }}>
-                    <span style={{ fontSize: 13, color: r.bold ? "var(--c-text)" : "var(--c-text-dim)" }}>{r.label}</span>
-                    <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
-                      {r.pct && <span style={{ fontSize: 12, color: "var(--c-text-dim)", fontFamily: "var(--ff-mono)" }}>{r.pct}</span>}
-                      <span style={{
-                        fontSize: 14, fontWeight: r.bold ? 800 : 600, fontFamily: "var(--ff-mono)",
-                        color: r.color, minWidth: 80, textAlign: "right"
-                      }}>{r.val}</span>
-                    </div>
+              <div style={{ display: "flex", gap: 24, alignItems: "flex-start" }}>
+                {/* Left: waterfall list */}
+                <div style={{ flex: "0 0 auto", minWidth: 280 }}>
+                  <div style={{ display: "grid", gap: 8 }}>
+                    {[
+                      { label: "Overall Rate", val: fmt2(overallRate), pct: "", color: "var(--c-text)" },
+                      { label: "Quality Adjustment", val: `(${fmt2(overallRate * qualityPct / 100)})`, pct: `${qualityPct}%`, color: "var(--c-danger)" },
+                      { label: "Total Rate", val: fmt2(overallRate - overallRate * qualityPct / 100), pct: "", color: "var(--c-text)", bold: true },
+                      { label: "AI (Academic Incentive)", val: `(${fmt2(overallRate * aiPct / 100)})`, pct: `${aiPct}%`, color: "var(--c-danger)" },
+                      { label: "Dept RAO", val: `(${fmt2(overallRate * deptRaoPct / 100)})`, pct: `${deptRaoPct}%`, color: "var(--c-danger)" },
+                      { label: "Div RAO", val: `(${fmt2(overallRate * divRaoPct / 100)})`, pct: `${divRaoPct}%`, color: "var(--c-text-dim)" },
+                      { label: "Physician Comp Rate", val: fmt2(rateWaterfall.physRate), pct: "", color: "var(--c-accent)", bold: true },
+                    ].map((r, i) => (
+                      <div key={i} style={{
+                        display: "flex", justifyContent: "space-between", alignItems: "center",
+                        padding: "8px 12px", borderRadius: 8,
+                        background: r.bold ? "rgba(8,145,178,.08)" : "transparent",
+                        borderBottom: r.bold ? "none" : "1px solid var(--c-border)"
+                      }}>
+                        <span style={{ fontSize: 13, color: r.bold ? "var(--c-text)" : "var(--c-text-dim)" }}>{r.label}</span>
+                        <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+                          {r.pct && <span style={{ fontSize: 12, color: "var(--c-text-dim)", fontFamily: "var(--ff-mono)" }}>{r.pct}</span>}
+                          <span style={{
+                            fontSize: 14, fontWeight: r.bold ? 800 : 600, fontFamily: "var(--ff-mono)",
+                            color: r.color, minWidth: 80, textAlign: "right"
+                          }}>{r.val}</span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-              <div style={{ marginTop: 14, padding: "10px 12px", background: "var(--c-surface)", borderRadius: 8, fontSize: 12, color: "var(--c-text-dim)", fontFamily: "var(--ff-mono)" }}>
-                <strong style={{ color: "var(--c-text)" }}>Formula:</strong> Phys Rate = Overall − (Quality% + AI% + Dept RAO% + Div RAO%) × Overall<br />
-                = {fmt2(overallRate)} − ({qualityPct}% + {aiPct}% + {deptRaoPct}% + {divRaoPct}%) × {fmt2(overallRate)} = <strong style={{ color: "var(--c-accent)" }}>{fmt2(rateWaterfall.physRate)}</strong>
+                  <div style={{ marginTop: 14, padding: "10px 12px", background: "var(--c-surface)", borderRadius: 8, fontSize: 12, color: "var(--c-text-dim)", fontFamily: "var(--ff-mono)" }}>
+                    <strong style={{ color: "var(--c-text)" }}>Formula:</strong> Phys Rate = Overall − (Quality% + AI% + Dept RAO% + Div RAO%) × Overall<br />
+                    = {fmt2(overallRate)} − ({qualityPct}% + {aiPct}% + {deptRaoPct}% + {divRaoPct}%) × {fmt2(overallRate)} = <strong style={{ color: "var(--c-accent)" }}>{fmt2(rateWaterfall.physRate)}</strong>
+                  </div>
+                </div>
+                {/* Right: Sankey diagram */}
+                <div style={{ flex: 1, minWidth: 220 }}>
+                  <div style={{ fontSize: 11, color: "var(--c-text-dim)", marginBottom: 6, fontFamily: "var(--ff-mono)" }}>Rate allocation ($/wRVU)</div>
+                  <RVUSankeyChart rw={rateWaterfall} />
+                </div>
               </div>
             </Card>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16, marginTop: 16 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginTop: 16 }}>
               {/* Academic Rank Pay */}
               <Card title="Academic Rank Pay" accent="var(--c-accent2)">
                 <p style={{ fontSize: 12, color: "var(--c-text-dim)", lineHeight: 1.7, marginBottom: 12 }}>
@@ -551,44 +546,22 @@ export default function App() {
 
               {/* Chair Lever Metrics — detailed rubric, full width */}
               <Card title="Chair Lever Metrics" accent="var(--c-warn)" style={{ gridColumn: "1 / -1" }}>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 16, marginBottom: 16 }}>
-                  <div>
-                    <p style={{ fontSize: 12, color: "var(--c-text-dim)", lineHeight: 1.7 }}>
-                      The chair retains <strong style={{ color: "var(--c-warn)" }}>19% of the compensation pool</strong> to be allocated across three academic mission levers: Education, Research, and Service/Citizenship. Each lever receives one-third of the 19% pool. The chair assigns each physician a score of 1–5 per lever; higher scores reduce payout. Compensation is divided equally among pool physicians.
-                    </p>
-                    <div style={{ marginTop: 10, padding: "10px 12px", background: "var(--c-surface)", borderRadius: 8, fontFamily: "var(--ff-mono)", fontSize: 12, lineHeight: 1.9 }}>
-                      <div><strong style={{ color: "var(--c-text)" }}>Per-lever share</strong> = (5 − score) ÷ 4 × (Pool × 19% ÷ 3)</div>
-                      <div style={{ color: "var(--c-text-dim)", marginTop: 4 }}>
-                        Score 1 → 100% · Score 2 → 75% · Score 3 → 50% · Score 4 → 25% · Score 5 → 0%
-                      </div>
-                      <div style={{ borderTop: "1px solid var(--c-border)", marginTop: 6, paddingTop: 6 }}>
-                        <strong style={{ color: "var(--c-accent)" }}>Phys Pay</strong> = sum of 3 lever shares ÷ pool physicians
-                      </div>
-                    </div>
-                  </div>
-                  <div style={{ display: "grid", gap: 6 }}>
-                    {[
-                      { score: 1, label: "Exceptional", bg: darkMode ? "rgba(5,150,105,.15)" : "#f0fdf4", border: "rgba(5,150,105,.4)", color: "#059669" },
-                      { score: 2, label: "Above Expectations", bg: darkMode ? "rgba(8,145,178,.1)" : "#f0f9ff", border: "rgba(8,145,178,.3)", color: "var(--c-accent)" },
-                      { score: 3, label: "Meets Expectations", bg: "var(--c-surface)", border: "var(--c-border)", color: "var(--c-text-dim)" },
-                      { score: 4, label: "Below Expectations", bg: darkMode ? "rgba(217,119,6,.1)" : "#fffbeb", border: "rgba(217,119,6,.3)", color: "var(--c-warn)" },
-                      { score: 5, label: "Little/No Contribution", bg: darkMode ? "rgba(220,38,38,.1)" : "#fef2f2", border: "rgba(220,38,38,.3)", color: "var(--c-danger)" },
-                    ].map(s => (
-                      <div key={s.score} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 10px", borderRadius: 7, background: s.bg, border: `1px solid ${s.border}` }}>
-                        <span style={{ fontFamily: "var(--ff-mono)", fontWeight: 800, fontSize: 16, color: s.color, minWidth: 20, textAlign: "center" }}>{s.score}</span>
-                        <span style={{ fontSize: 12, fontWeight: 600, color: s.color }}>{s.label}</span>
-                        <span style={{ fontSize: 11, color: "var(--c-text-dim)", marginLeft: "auto", fontFamily: "var(--ff-mono)" }}>{((5 - s.score) / 4 * 100).toFixed(0)}% of lever</span>
-                      </div>
-                    ))}
+                <p style={{ fontSize: 12, color: "var(--c-text-dim)", lineHeight: 1.7, marginBottom: 10 }}>
+                  The chair retains <strong style={{ color: "var(--c-warn)" }}>19% of the compensation pool</strong> to be allocated across three academic mission levers: Education, Research, and Service/Citizenship. Each lever receives one-third of the 19% pool. The chair assigns each physician a score of 1–5 per lever; higher scores reduce payout. Compensation is divided equally among pool physicians.
+                </p>
+                <div style={{ marginBottom: 16, padding: "10px 12px", background: "var(--c-surface)", borderRadius: 8, fontFamily: "var(--ff-mono)", fontSize: 12, lineHeight: 1.9 }}>
+                  <div><strong style={{ color: "var(--c-text)" }}>Per-lever share</strong> = (5 − score) ÷ 4 × (Pool × 19% ÷ 3)</div>
+                  <div style={{ borderTop: "1px solid var(--c-border)", marginTop: 6, paddingTop: 6 }}>
+                    <strong style={{ color: "var(--c-accent)" }}>Phys Pay</strong> = sum of 3 lever shares ÷ pool physicians
                   </div>
                 </div>
 
-                {/* Scoring rubric table */}
+                {/* Scoring rubric table with integrated score levels */}
                 <div style={{ overflowX: "auto" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
                     <thead>
                       <tr style={{ background: "var(--c-surface)" }}>
-                        <th style={{ padding: "8px 12px", textAlign: "left", fontWeight: 700, color: "var(--c-text-dim)", textTransform: "uppercase", fontSize: 10, letterSpacing: 1, width: 60, borderBottom: "2px solid var(--c-border)" }}>Score</th>
+                        <th style={{ padding: "8px 12px", textAlign: "left", fontWeight: 700, color: "var(--c-text-dim)", textTransform: "uppercase", fontSize: 10, letterSpacing: 1, width: 130, borderBottom: "2px solid var(--c-border)" }}>Score / Level / Payout</th>
                         <th style={{ padding: "8px 12px", textAlign: "left", fontWeight: 700, color: "var(--c-accent2)", textTransform: "uppercase", fontSize: 10, letterSpacing: 1, borderBottom: "2px solid var(--c-border)" }}>Education</th>
                         <th style={{ padding: "8px 12px", textAlign: "left", fontWeight: 700, color: "var(--c-accent3)", textTransform: "uppercase", fontSize: 10, letterSpacing: 1, borderBottom: "2px solid var(--c-border)" }}>Research</th>
                         <th style={{ padding: "8px 12px", textAlign: "left", fontWeight: 700, color: "var(--c-warn)", textTransform: "uppercase", fontSize: 10, letterSpacing: 1, borderBottom: "2px solid var(--c-border)" }}>Service / Citizenship</th>
@@ -597,38 +570,42 @@ export default function App() {
                     <tbody>
                       {[
                         {
-                          score: 1,
+                          score: 1, label: "Exceptional", color: "#059669",
                           edu: "Program or course director; substantial medical education leadership; peer-reviewed educational scholarship",
                           research: "Active funded research program; multiple peer-reviewed publications; extramural grants",
                           service: "Major committee chair at institutional or national level; significant mentorship program; departmental leadership role",
                         },
                         {
-                          score: 2,
+                          score: 2, label: "Above Expectations", color: "var(--c-accent)",
                           edu: "Regular teaching at all trainee levels; curriculum development contributions; active clinical mentoring",
                           research: "Active research participation; publications as primary or contributing author; active IRB protocols",
                           service: "Active committee membership; departmental service beyond requirements; peer and student mentoring",
                         },
                         {
-                          score: 3,
+                          score: 3, label: "Meets Expectations", color: "var(--c-text-dim)",
                           edu: "Participates in scheduled didactic sessions and required teaching activities",
                           research: "Some research involvement; contributing author on departmental projects",
                           service: "Meets basic service requirements; attends required departmental meetings",
                         },
                         {
-                          score: 4,
+                          score: 4, label: "Below Expectations", color: "var(--c-warn)",
                           edu: "Minimal teaching beyond required clinical encounters",
                           research: "Minimal research activity; occasional involvement only",
                           service: "Minimal participation beyond the required minimum",
                         },
                         {
-                          score: 5,
+                          score: 5, label: "Little/No Contribution", color: "var(--c-danger)",
                           edu: "Does not participate in educational activities",
                           research: "No active research involvement",
                           service: "Does not participate in service or citizenship activities",
                         },
                       ].map((row, i) => (
                         <tr key={row.score} style={{ borderBottom: "1px solid var(--c-border)", background: i % 2 === 0 ? "transparent" : "var(--c-surface)" }}>
-                          <td style={{ padding: "10px 12px", fontFamily: "var(--ff-mono)", fontWeight: 800, fontSize: 15, color: ["#059669","var(--c-accent)","var(--c-text-dim)","var(--c-warn)","var(--c-danger)"][i], verticalAlign: "top" }}>{row.score}</td>
+                          <td style={{ padding: "10px 12px", verticalAlign: "top" }}>
+                            <div style={{ fontFamily: "var(--ff-mono)", fontWeight: 800, fontSize: 18, color: row.color }}>{row.score}</div>
+                            <div style={{ fontSize: 11, fontWeight: 600, color: row.color, marginTop: 2 }}>{row.label}</div>
+                            <div style={{ fontSize: 10, color: "var(--c-text-dim)", fontFamily: "var(--ff-mono)", marginTop: 3 }}>{((5 - row.score) / 4 * 100).toFixed(0)}% of lever</div>
+                          </td>
                           <td style={{ padding: "10px 12px", color: "var(--c-text)", lineHeight: 1.6, verticalAlign: "top" }}>{row.edu}</td>
                           <td style={{ padding: "10px 12px", color: "var(--c-text)", lineHeight: 1.6, verticalAlign: "top" }}>{row.research}</td>
                           <td style={{ padding: "10px 12px", color: "var(--c-text)", lineHeight: 1.6, verticalAlign: "top" }}>{row.service}</td>
@@ -1711,54 +1688,173 @@ function SVGChart({ data, xKey, yKey, color, xLabel, yLabel, currentX, height = 
 }
 
 // ─── WATERFALL CHART ─────────────────────────────────────────────────────────
-function WaterfallChart({ comp }) {
+function CompSankeyChart({ comp }) {
   const items = [
     { label: "Productivity", val: comp.productivity, color: "var(--c-accent)" },
-    { label: "Academic", val: comp.academicPay, color: "var(--c-accent2)" },
-    { label: "Chair Lever", val: comp.leverPay, color: "var(--c-warn)" },
-    { label: "Call Pay", val: comp.callPay, color: "var(--c-accent3)" },
-    { label: "Quality", val: comp.qualityPerPhys, color: "#818cf8" },
-    { label: "Cosmetic", val: comp.cosmeticNet, color: "var(--c-danger)" },
+    { label: "Academic",     val: comp.academicPay,  color: "var(--c-accent2)" },
+    { label: "Chair Lever",  val: comp.leverPay,     color: "var(--c-warn)" },
+    { label: "Call Pay",     val: comp.callPay,       color: "var(--c-accent3)" },
+    { label: "Quality",      val: comp.qualityPerPhys, color: "#818cf8" },
+    { label: "Cosmetic",     val: comp.cosmeticNet,   color: "var(--c-danger)" },
   ].filter(i => i.val > 0);
 
   const total = items.reduce((s, i) => s + i.val, 0);
-  const W = 480, H = 180, P = { left: 70, right: 20, top: 10, bottom: 30 };
-  const iW = W - P.left - P.right, iH = H - P.top - P.bottom;
-  const barW = Math.min(40, (iW / (items.length + 1)) * 0.7);
-  const gap = iW / (items.length + 1);
+  if (total === 0) return null;
 
-  let cumulative = 0;
+  const W = 520, H = 220;
+  const nodeW = 12, gap = 4;
+  const leftX = 152, rightX = 368;
+  const topPad = 16, botPad = 16;
+  const innerH = H - topPad - botPad;
+  const usableH = innerH - gap * (items.length - 1);
+
+  // Build left node rects
+  const nodes = [];
+  let y = topPad;
+  for (const item of items) {
+    const h = (item.val / total) * usableH;
+    nodes.push({ ...item, y, h });
+    y += h + gap;
+  }
+
+  // Right node spans full inner height
+  const rightTop = topPad;
+  const rightBot = topPad + innerH;
+
+  // Bezier control points
+  const cp1x = leftX + nodeW + 60, cp2x = rightX - 60;
+
+  // Accumulate right-side band positions (same order as left)
+  let rightY = rightTop;
+  const bands = nodes.map(n => {
+    const bh = (n.val / total) * innerH;
+    const top = rightY;
+    rightY += bh;
+    return { ...n, rightTop: top, rightBot: top + bh };
+  });
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", fontFamily: "var(--ff-mono)" }}>
-      {items.map((item, i) => {
-        const x = P.left + (i + 0.5) * gap - barW / 2;
-        const barH = (item.val / total) * iH;
-        const yBottom = P.top + iH - (cumulative / total) * iH;
-        const yTop = yBottom - barH;
-        cumulative += item.val;
-        return (
-          <g key={i}>
-            <rect x={x} y={yTop} width={barW} height={barH} fill={item.color} rx={3} opacity={0.85} />
-            <text x={x + barW / 2} y={yTop - 5} fill={item.color} fontSize={8} textAnchor="middle" fontWeight={700}>
-              {fmt(item.val)}
-            </text>
-            <text x={x + barW / 2} y={P.top + iH + 14} fill="var(--c-text-dim)" fontSize={8} textAnchor="middle">
-              {item.label}
-            </text>
-          </g>
-        );
+      {/* Flow paths */}
+      {bands.map((b, i) => {
+        const lTop = b.y, lBot = b.y + b.h;
+        const rTop = b.rightTop, rBot = b.rightBot;
+        const d = [
+          `M ${leftX + nodeW} ${lTop}`,
+          `C ${cp1x} ${lTop}, ${cp2x} ${rTop}, ${rightX} ${rTop}`,
+          `L ${rightX} ${rBot}`,
+          `C ${cp2x} ${rBot}, ${cp1x} ${lBot}, ${leftX + nodeW} ${lBot}`,
+          "Z",
+        ].join(" ");
+        return <path key={i} d={d} fill={b.color} opacity={0.18} />;
       })}
-      {/* Total bar */}
-      <rect x={P.left + (items.length + 0.5) * gap - barW / 2} y={P.top} width={barW} height={iH} fill="var(--c-accent)" rx={3} opacity={0.3} />
-      <rect x={P.left + (items.length + 0.5) * gap - barW / 2} y={P.top} width={barW} height={iH}
-        fill="none" stroke="var(--c-accent)" strokeWidth={1.5} rx={3} />
-      <text x={P.left + (items.length + 0.5) * gap} y={P.top - 5} fill="var(--c-accent)" fontSize={10} textAnchor="middle" fontWeight={800}>
-        {fmt(total)}
-      </text>
-      <text x={P.left + (items.length + 0.5) * gap} y={P.top + iH + 14} fill="var(--c-text-dim)" fontSize={8} textAnchor="middle">
+
+      {/* Left component nodes */}
+      {nodes.map((n, i) => (
+        <g key={i}>
+          <rect x={leftX} y={n.y} width={nodeW} height={n.h} fill={n.color} rx={2} />
+          <text x={leftX - 5} y={n.y + n.h / 2 - 5} fill={n.color} fontSize={9} textAnchor="end" fontWeight={700} dominantBaseline="middle">
+            {n.label}
+          </text>
+          <text x={leftX - 5} y={n.y + n.h / 2 + 6} fill={n.color} fontSize={8} textAnchor="end" opacity={0.8}>
+            {fmt(n.val)}
+          </text>
+        </g>
+      ))}
+
+      {/* Right total node */}
+      <rect x={rightX} y={rightTop} width={nodeW} height={rightBot - rightTop} fill="var(--c-accent)" rx={2} opacity={0.6} />
+      <text x={rightX + nodeW + 5} y={rightTop + (rightBot - rightTop) / 2 - 6} fill="var(--c-accent)" fontSize={10} fontWeight={800} dominantBaseline="middle">
         TOTAL
       </text>
+      <text x={rightX + nodeW + 5} y={rightTop + (rightBot - rightTop) / 2 + 7} fill="var(--c-accent)" fontSize={9} opacity={0.85}>
+        {fmt(total)}
+      </text>
+    </svg>
+  );
+}
+
+// ─── wRVU RATE SANKEY ─────────────────────────────────────────────────────────
+function RVUSankeyChart({ rw }) {
+  const flows = [
+    { label: "Quality Adj", val: rw.qAdj,    color: "var(--c-danger)" },
+    { label: "AI Adj",      val: rw.aiAdj,   color: "var(--c-danger)" },
+    { label: "Dept RAO",    val: rw.deptAdj, color: "var(--c-danger)" },
+    { label: "Div RAO",     val: rw.divAdj,  color: "var(--c-text-dim)" },
+    { label: "Phys Rate",   val: rw.physRate, color: "var(--c-accent)" },
+  ].filter(f => f.val > 0);
+
+  const total = rw.overallRate;
+  if (!total) return null;
+
+  const W = 360, H = 200;
+  const nodeW = 12, gap = 4;
+  const leftX = 8, rightX = 220;
+  const topPad = 14, botPad = 14;
+  const innerH = H - topPad - botPad;
+  const usableH = innerH - gap * (flows.length - 1);
+
+  // Right nodes stacked top-to-bottom
+  const nodes = [];
+  let y = topPad;
+  for (const f of flows) {
+    const h = (f.val / total) * usableH;
+    nodes.push({ ...f, y, h });
+    y += h + gap;
+  }
+
+  // Left node = full height (overall rate)
+  const leftTop = topPad, leftBot = topPad + innerH;
+
+  // Bezier control points
+  const cp1x = leftX + nodeW + 55, cp2x = rightX - 55;
+
+  // Accumulate left-side band positions (proportional, same order)
+  let leftY = leftTop;
+  const bands = nodes.map(n => {
+    const bh = (n.val / total) * innerH;
+    const top = leftY;
+    leftY += bh;
+    return { ...n, leftTop: top, leftBot: top + bh };
+  });
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", fontFamily: "var(--ff-mono)" }}>
+      {/* Flow paths */}
+      {bands.map((b, i) => {
+        const lTop = b.leftTop, lBot = b.leftBot;
+        const rTop = b.y, rBot = b.y + b.h;
+        const d = [
+          `M ${leftX + nodeW} ${lTop}`,
+          `C ${cp1x} ${lTop}, ${cp2x} ${rTop}, ${rightX} ${rTop}`,
+          `L ${rightX} ${rBot}`,
+          `C ${cp2x} ${rBot}, ${cp1x} ${lBot}, ${leftX + nodeW} ${lBot}`,
+          "Z",
+        ].join(" ");
+        return <path key={i} d={d} fill={b.color} opacity={0.18} />;
+      })}
+
+      {/* Left node — Overall Rate */}
+      <rect x={leftX} y={leftTop} width={nodeW} height={leftBot - leftTop} fill="var(--c-text-dim)" rx={2} opacity={0.5} />
+      <text x={leftX + nodeW + 5} y={leftTop + (leftBot - leftTop) / 2 - 6} fill="var(--c-text)" fontSize={9} fontWeight={700}>
+        Overall
+      </text>
+      <text x={leftX + nodeW + 5} y={leftTop + (leftBot - leftTop) / 2 + 6} fill="var(--c-text-dim)" fontSize={8}>
+        {fmt2(total)}/wRVU
+      </text>
+
+      {/* Right output nodes */}
+      {nodes.map((n, i) => (
+        <g key={i}>
+          <rect x={rightX} y={n.y} width={nodeW} height={n.h} fill={n.color} rx={2} />
+          <text x={rightX + nodeW + 5} y={n.y + n.h / 2 - 4} fill={n.color} fontSize={9} fontWeight={700} dominantBaseline="middle">
+            {n.label}
+          </text>
+          <text x={rightX + nodeW + 5} y={n.y + n.h / 2 + 6} fill={n.color} fontSize={8} opacity={0.85}>
+            {fmt2(n.val)}
+          </text>
+        </g>
+      ))}
     </svg>
   );
 }
