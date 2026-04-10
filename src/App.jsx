@@ -61,6 +61,7 @@ const TABS = [
   { id: "session", label: "Session Planner", icon: "🗓" },
   { id: "cpt", label: "CPT Database", icon: "🔬" },
   { id: "charts", label: "Charts", icon: "📈" },
+  { id: "wizard", label: "Guided Wizard", icon: "🧭" },
 ];
 
 // ─── MAIN APP ────────────────────────────────────────────────────────────────
@@ -896,6 +897,37 @@ export default function App() {
             </div>
           </div>
         )}
+
+        {/* ═══════════════ GUIDED WIZARD TAB ═══════════════ */}
+        {tab === "wizard" && (
+          <div>
+            <h2 style={{ fontSize: 20, fontWeight: 800, fontFamily: "var(--ff-display)", marginBottom: 20 }}>
+              Guided Planning Wizard
+            </h2>
+            <GuidedPlanningWizard
+              comp={comp}
+              rate={rateWaterfall.physRate}
+              cptData={cptData}
+              weeksWorked={weeksWorked}
+              clinicDaysPerWeek={clinicDaysPerWeek}
+              orDaysPerWeek={orDaysPerWeek}
+              setWeeksWorked={setWeeksWorked}
+              setClinicDaysPerWeek={setClinicDaysPerWeek}
+              setOrDaysPerWeek={setOrDaysPerWeek}
+              annualWRVU={annualWRVU}
+              setAnnualWRVU={setAnnualWRVU}
+              rank={rank}
+              setRank={setRank}
+              callWeeks={callWeeks}
+              setCallWeeks={setCallWeeks}
+              qualityPoolTotal={qualityPoolTotal}
+              setQualityPoolTotal={setQualityPoolTotal}
+              leverScores={leverScores}
+              setLeverScores={setLeverScores}
+            />
+          </div>
+        )}
+
       </main>
 
       <footer style={{
@@ -1073,6 +1105,303 @@ function VisitMixCalculator({ cptData, weeksWorked, clinicDaysPerWeek, rate }) {
           <div style={{ fontSize: 18, fontWeight: 800, fontFamily: "var(--ff-mono)", color: "var(--c-warn)" }}>{result.dailyPts}</div>
           <div style={{ fontSize: 10, color: "var(--c-text-dim)" }}>Patients/Day</div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function GuidedPlanningWizard({
+  comp, rate, cptData, weeksWorked, clinicDaysPerWeek, orDaysPerWeek,
+  setWeeksWorked, setClinicDaysPerWeek, setOrDaysPerWeek,
+  annualWRVU, setAnnualWRVU, rank, setRank,
+  callWeeks, setCallWeeks, qualityPoolTotal, setQualityPoolTotal,
+  leverScores, setLeverScores
+}) {
+  const steps = [
+    "Target Compensation",
+    "RVU Breakdown",
+    "Weekly Structure",
+    "Clinic Session Planner",
+    "OR Planner",
+    "Weekly Schedule Builder",
+    "Final Unified Report",
+  ];
+
+  const [step, setStep] = useState(1);
+  const [mode, setMode] = useState("salary");
+  const [targetSalary, setTargetSalary] = useState(comp.total);
+  const [scheduleAnnualRVU, setScheduleAnnualRVU] = useState(annualWRVU);
+  const [halfdaysPerDay, setHalfdaysPerDay] = useState(2);
+  const [adminTimePct, setAdminTimePct] = useState(10);
+  const [clinicSharePct, setClinicSharePct] = useState(65);
+  const [percentNew, setPercentNew] = useState(30);
+  const [percentReturn, setPercentReturn] = useState(70);
+  const [l3Mix, setL3Mix] = useState(25);
+  const [l4Mix, setL4Mix] = useState(60);
+  const [l5Mix, setL5Mix] = useState(15);
+  const [clinicProceduresPerSession, setClinicProceduresPerSession] = useState(2);
+  const [customProcedureRVU, setCustomProcedureRVU] = useState(0);
+  const [customProcedureCount, setCustomProcedureCount] = useState(0);
+  const [surgeries, setSurgeries] = useState({
+    cataracts: 6,
+    cataractMigs: 2,
+    secondaryIol: 1,
+    iolExchange: 1,
+    pterygium: 0,
+    custom: 0,
+  });
+  const [customSurgeryRVU, setCustomSurgeryRVU] = useState(8);
+  const [sensitivityPatients, setSensitivityPatients] = useState(24);
+
+  const nonProductivityIncome = comp.total - comp.productivity;
+  const annualRVU = mode === "salary"
+    ? Math.max(0, (targetSalary - nonProductivityIncome) / (rate || 1))
+    : Math.max(0, scheduleAnnualRVU);
+  const computedSalary = nonProductivityIncome + annualRVU * rate;
+
+  useEffect(() => {
+    setAnnualWRVU(Math.round(annualRVU));
+  }, [annualRVU, setAnnualWRVU]);
+
+  const rvuBreakdown = useMemo(() => {
+    const monthly = annualRVU / 12;
+    const weekly = weeksWorked > 0 ? annualRVU / weeksWorked : 0;
+    const daily = clinicDaysPerWeek > 0 ? weekly / clinicDaysPerWeek : 0;
+    return { monthly, weekly, daily, halfday: daily / 2 };
+  }, [annualRVU, weeksWorked, clinicDaysPerWeek]);
+
+  const weeklyStructure = useMemo(() => {
+    const productiveFraction = Math.max(0, 1 - adminTimePct / 100);
+    const weeklyTarget = weeksWorked > 0 ? annualRVU / weeksWorked : 0;
+    const clinicWeekly = weeklyTarget * (clinicSharePct / 100) * productiveFraction;
+    const orWeekly = weeklyTarget * (1 - clinicSharePct / 100) * productiveFraction;
+    const rvuPerClinicDay = clinicDaysPerWeek > 0 ? clinicWeekly / clinicDaysPerWeek : 0;
+    const rvuPerOrDay = orDaysPerWeek > 0 ? orWeekly / orDaysPerWeek : 0;
+    return {
+      weeklyTarget,
+      clinicWeekly,
+      orWeekly,
+      rvuPerClinicDay,
+      rvuPerOrDay,
+      rvuPerHalfday: halfdaysPerDay > 0 ? rvuPerClinicDay / halfdaysPerDay : 0,
+    };
+  }, [annualRVU, weeksWorked, clinicSharePct, adminTimePct, clinicDaysPerWeek, orDaysPerWeek, halfdaysPerDay]);
+
+  const clinicPlanner = useMemo(() => {
+    const new4 = cptData.find(c => c.code === "99204")?.wRVU || 2.6;
+    const new5 = cptData.find(c => c.code === "99205")?.wRVU || 3.5;
+    const est3 = cptData.find(c => c.code === "99213")?.wRVU || 1.3;
+    const est4 = cptData.find(c => c.code === "99214")?.wRVU || 1.92;
+    const est5 = cptData.find(c => c.code === "99215")?.wRVU || 2.8;
+    const proc = cptData.find(c => c.code === "67028")?.wRVU || 1.8;
+
+    const newAvg = new4 * 0.7 + new5 * 0.3;
+    const returnAvg = est3 * (l3Mix / 100) + est4 * (l4Mix / 100) + est5 * (l5Mix / 100);
+    const visitRvu = newAvg * (percentNew / 100) + returnAvg * (percentReturn / 100);
+    const totalRvuPerPatient = visitRvu + ((clinicProceduresPerSession * proc) + (customProcedureCount * customProcedureRVU)) / Math.max(sensitivityPatients, 1);
+    const rvuSession = totalRvuPerPatient * sensitivityPatients;
+    const patientsNeeded = totalRvuPerPatient > 0 ? weeklyStructure.rvuPerHalfday / totalRvuPerPatient : 0;
+
+    return { visitRvu, totalRvuPerPatient, rvuSession, patientsNeeded };
+  }, [cptData, l3Mix, l4Mix, l5Mix, percentNew, percentReturn, clinicProceduresPerSession, customProcedureCount, customProcedureRVU, sensitivityPatients, weeklyStructure.rvuPerHalfday]);
+
+  const orPlanner = useMemo(() => {
+    const rvuMap = {
+      cataracts: cptData.find(c => c.code === "66984")?.wRVU || 7.35,
+      cataractMigs: cptData.find(c => c.code === "66989")?.wRVU || 8.79,
+      secondaryIol: cptData.find(c => c.code === "66985")?.wRVU || 11.76,
+      iolExchange: cptData.find(c => c.code === "66986")?.wRVU || 9.47,
+      pterygium: cptData.find(c => c.code === "65426")?.wRVU || 5.48,
+      custom: customSurgeryRVU,
+    };
+    const casesPerDay = Object.values(surgeries).reduce((s, n) => s + n, 0);
+    const rvuPerOrDay = Object.entries(surgeries).reduce((s, [k, n]) => s + n * rvuMap[k], 0);
+    return { rvuMap, casesPerDay, rvuPerOrDay };
+  }, [cptData, surgeries, customSurgeryRVU]);
+
+  const weeklySchedule = useMemo(() => {
+    const days = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+    const schedule = [];
+    let clinicLeft = clinicDaysPerWeek;
+    let orLeft = orDaysPerWeek;
+    days.forEach((d) => {
+      let type = "Admin";
+      if (clinicLeft > 0) {
+        type = "Clinic";
+        clinicLeft -= 1;
+      } else if (orLeft > 0) {
+        type = "OR";
+        orLeft -= 1;
+      }
+      const dayRVU = type === "Clinic" ? weeklyStructure.rvuPerClinicDay : type === "OR" ? weeklyStructure.rvuPerOrDay : 0;
+      schedule.push({
+        day: d,
+        type,
+        patients: type === "Clinic" ? Math.round(clinicPlanner.patientsNeeded * halfdaysPerDay) : 0,
+        billingMix: type === "Clinic" ? `L3/L4/L5 ${l3Mix}/${l4Mix}/${l5Mix}` : "Surgery mix",
+        procedures: type === "Clinic" ? clinicProceduresPerSession * halfdaysPerDay : orPlanner.casesPerDay,
+        rvu: dayRVU,
+      });
+    });
+    return schedule;
+  }, [clinicDaysPerWeek, orDaysPerWeek, weeklyStructure, clinicPlanner.patientsNeeded, halfdaysPerDay, l3Mix, l4Mix, l5Mix, clinicProceduresPerSession, orPlanner.casesPerDay]);
+
+  const weeklyRVU = weeklySchedule.reduce((s, d) => s + d.rvu, 0);
+  const scheduleAnnualRVUComputed = weeklyRVU * weeksWorked;
+  const finalCompensation = nonProductivityIncome + scheduleAnnualRVUComputed * rate;
+  const compareToTarget = scheduleAnnualRVUComputed - annualRVU;
+
+  const wizardState = {
+    targetSalary: mode === "salary" ? targetSalary : computedSalary,
+    requiredRVU: annualRVU,
+    clinicDays: clinicDaysPerWeek,
+    orDays: orDaysPerWeek,
+    visitMix: { percentNew, percentReturn, l3Mix, l4Mix, l5Mix },
+    procedureMix: surgeries,
+    weeklyPlan: weeklySchedule,
+    finalComp: finalCompensation,
+  };
+
+  const setSalaryMode = (value) => {
+    setMode("salary");
+    setTargetSalary(value);
+  };
+
+  const setScheduleMode = (value) => {
+    setMode("schedule");
+    setScheduleAnnualRVU(value);
+  };
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "2.1fr 1fr", gap: 16, alignItems: "start" }}>
+      <div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+          <div style={{ fontSize: 12, color: "var(--c-text-dim)" }}>Step {step} of {steps.length}: {steps[step - 1]}</div>
+          <div style={{ width: 220, height: 8, background: "var(--c-border)", borderRadius: 999 }}><div style={{ width: `${(step / steps.length) * 100}%`, height: "100%", background: "var(--c-accent)", borderRadius: 999 }} /></div>
+        </div>
+
+        <Card title="Stepper Navigation" accent="var(--c-accent)">
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 8 }}>
+            {steps.map((s, i) => <button key={s} onClick={() => setStep(i + 1)} style={{ padding: "8px", borderRadius: 8, border: `1px solid ${step === i + 1 ? "var(--c-accent)" : "var(--c-border)"}`, background: step === i + 1 ? "rgba(34,211,238,.12)" : "var(--c-surface)", color: "var(--c-text)", cursor: "pointer", fontSize: 12 }}>{i + 1}. {s}</button>)}
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 12 }}>
+            <button onClick={() => setStep(s => Math.max(1, s - 1))} style={{ padding: "8px 14px", borderRadius: 8, border: "1px solid var(--c-border)", background: "var(--c-surface)", color: "var(--c-text)", cursor: "pointer" }}>← Back</button>
+            <button onClick={() => setStep(s => Math.min(steps.length, s + 1))} style={{ padding: "8px 14px", borderRadius: 8, border: "1px solid var(--c-accent)", background: "rgba(34,211,238,.12)", color: "var(--c-accent)", cursor: "pointer" }}>Next →</button>
+          </div>
+        </Card>
+
+        <Card title="1) Target Compensation" accent="var(--c-accent2)" style={{ marginTop: 14 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10 }}>
+            <NumInput label="Target Salary" value={Math.round(mode === "salary" ? targetSalary : computedSalary)} onChange={setSalaryMode} prefix="$" min={0} />
+            <NumInput label="Annual RVU (Schedule→Salary)" value={Math.round(mode === "schedule" ? scheduleAnnualRVU : annualRVU)} onChange={setScheduleMode} min={0} />
+            <div><label style={{ fontSize: 12, color: "var(--c-text-dim)", display: "block", marginBottom: 3 }}>Academic Rank</label><select value={rank} onChange={e => setRank(e.target.value)} style={{ width: "100%", padding: "8px", borderRadius: 8, border: "1px solid var(--c-border)", background: "var(--c-surface)", color: "var(--c-text)" }}><option value="assistant">Assistant</option><option value="associate">Associate</option><option value="professor">Professor</option></select></div>
+            <NumInput label="Call Participation (weeks)" value={callWeeks} onChange={setCallWeeks} min={0} />
+            <NumInput label="Quality Pool" value={qualityPoolTotal} onChange={setQualityPoolTotal} prefix="$" min={0} />
+            <NumInput label="Weeks Worked" value={weeksWorked} onChange={setWeeksWorked} min={20} max={52} />
+            <NumInput label="Clinic Days/Week" value={clinicDaysPerWeek} onChange={setClinicDaysPerWeek} min={0} max={5} />
+            <NumInput label="OR Days/Week" value={orDaysPerWeek} onChange={setOrDaysPerWeek} min={0} max={5} />
+          </div>
+          <div style={{ marginTop: 10, fontFamily: "var(--ff-mono)", fontSize: 12 }}>
+            Non-Productivity Income: <strong>{fmt(nonProductivityIncome)}</strong> · Required Productivity Income: <strong>{fmt(Math.max(0, (mode === "salary" ? targetSalary : computedSalary) - nonProductivityIncome))}</strong> · Required RVU: <strong style={{ color: "var(--c-accent)" }}>{fmtN(annualRVU)}</strong>
+          </div>
+        </Card>
+
+        <Card title="2) RVU Breakdown" accent="var(--c-accent3)" style={{ marginTop: 14 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 8 }}>
+            {[{ l: "Annual", v: annualRVU }, { l: "Monthly", v: rvuBreakdown.monthly }, { l: "Weekly", v: rvuBreakdown.weekly }, { l: "Daily", v: rvuBreakdown.daily }, { l: "Halfday", v: rvuBreakdown.halfday }].map((x) => <div key={x.l} style={{ textAlign: "center", padding: 8, borderRadius: 8, background: "var(--c-surface)" }}><div style={{ fontSize: 18, fontWeight: 800, fontFamily: "var(--ff-mono)", color: "var(--c-accent)" }}>{fmtN(x.v)}</div><div style={{ fontSize: 11, color: "var(--c-text-dim)" }}>{x.l}</div></div>)}
+          </div>
+          <div style={{ marginTop: 10, fontFamily: "var(--ff-mono)", fontSize: 12, background: "var(--c-surface)", padding: 8, borderRadius: 8 }}>
+            Required_RVU = (TargetSalary - NonProductivity) / ConversionFactor = ({fmt(mode === "salary" ? targetSalary : computedSalary)} - {fmt(nonProductivityIncome)}) / {fmt2(rate)} = {fmtN(annualRVU)}
+          </div>
+        </Card>
+
+        <Card title="3) Weekly Structure" accent="var(--c-warn)" style={{ marginTop: 14 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 8 }}>
+            <NumInput label="Halfdays/Day" value={halfdaysPerDay} onChange={setHalfdaysPerDay} min={1} max={3} />
+            <NumInput label="Admin Time %" value={adminTimePct} onChange={setAdminTimePct} min={0} max={50} />
+            <NumInput label="Clinic RVU Share %" value={clinicSharePct} onChange={setClinicSharePct} min={20} max={90} />
+          </div>
+          <div style={{ fontSize: 12, marginTop: 8 }}>RVU/Clinic day: <strong>{fmtN(weeklyStructure.rvuPerClinicDay)}</strong> · RVU/OR day: <strong>{fmtN(weeklyStructure.rvuPerOrDay)}</strong> · RVU/Halfday: <strong>{fmtN(weeklyStructure.rvuPerHalfday)}</strong></div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 6, marginTop: 8 }}>
+            {weeklySchedule.map((d) => <div key={d.day} style={{ border: "1px solid var(--c-border)", borderRadius: 8, padding: 8, background: "var(--c-surface)" }}><div style={{ fontWeight: 700 }}>{d.day}</div><div style={{ fontSize: 11, color: "var(--c-text-dim)" }}>{d.type}</div><div style={{ fontFamily: "var(--ff-mono)", color: "var(--c-accent)" }}>{fmtN(d.rvu)}</div></div>)}
+          </div>
+        </Card>
+
+        <Card title="4) Clinic Session Planner" accent="var(--c-accent)" style={{ marginTop: 14 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 8 }}>
+            <NumInput label="% New" value={percentNew} onChange={(v) => { setPercentNew(v); setPercentReturn(100 - v); }} min={0} max={100} />
+            <NumInput label="% Return" value={percentReturn} onChange={(v) => { setPercentReturn(v); setPercentNew(100 - v); }} min={0} max={100} />
+            <NumInput label="L3 %" value={l3Mix} onChange={setL3Mix} min={0} max={100} />
+            <NumInput label="L4 %" value={l4Mix} onChange={setL4Mix} min={0} max={100} />
+            <NumInput label="L5 %" value={l5Mix} onChange={setL5Mix} min={0} max={100} />
+            <NumInput label="Clinic procedures/session" value={clinicProceduresPerSession} onChange={setClinicProceduresPerSession} min={0} />
+            <NumInput label="Custom procedures" value={customProcedureCount} onChange={setCustomProcedureCount} min={0} />
+            <NumInput label="Custom proc RVU" value={customProcedureRVU} onChange={setCustomProcedureRVU} step={0.1} min={0} />
+          </div>
+          <div style={{ marginTop: 8, fontSize: 12 }}>RVU/patient: <strong>{fmtN(clinicPlanner.totalRvuPerPatient)}</strong> · Patients/session needed: <strong>{fmtN(clinicPlanner.patientsNeeded)}</strong> · RVU/session @ slider: <strong>{fmtN(clinicPlanner.rvuSession)}</strong></div>
+          <div style={{ marginTop: 6, fontSize: 12, color: "var(--c-text-dim)" }}>Optimal clinic template: {Math.ceil(clinicPlanner.patientsNeeded * (percentNew / 100))} new + {Math.ceil(clinicPlanner.patientsNeeded * (percentReturn / 100))} return encounters/session.</div>
+        </Card>
+
+        <Card title="5) OR Planner" accent="var(--c-accent3)" style={{ marginTop: 14 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 8 }}>
+            {Object.entries(surgeries).map(([k, v]) => <NumInput key={k} label={k} value={v} onChange={(n) => setSurgeries(prev => ({ ...prev, [k]: n }))} min={0} />)}
+            <NumInput label="Custom surgery RVU" value={customSurgeryRVU} onChange={setCustomSurgeryRVU} step={0.1} min={0} />
+          </div>
+          <div style={{ marginTop: 8, fontSize: 12 }}>RVU/OR Day: <strong>{fmtN(orPlanner.rvuPerOrDay)}</strong> · Cases/OR Day: <strong>{orPlanner.casesPerDay}</strong> · Optimal OR mix updates live from editable case counts/RVUs.</div>
+        </Card>
+
+        <Card title="6) Weekly Schedule Builder" accent="var(--c-accent2)" style={{ marginTop: 14 }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+            <thead><tr style={{ borderBottom: "1px solid var(--c-border)" }}><th style={{ textAlign: "left", padding: 6 }}>Day</th><th style={{ textAlign: "left", padding: 6 }}>Clinic/OR</th><th style={{ textAlign: "right", padding: 6 }}>Patients</th><th style={{ textAlign: "left", padding: 6 }}>Billing Mix</th><th style={{ textAlign: "right", padding: 6 }}>Procedures</th><th style={{ textAlign: "right", padding: 6 }}>RVU</th></tr></thead>
+            <tbody>{weeklySchedule.map((d) => <tr key={d.day} style={{ borderBottom: "1px solid var(--c-border)" }}><td style={{ padding: 6 }}>{d.day}</td><td style={{ padding: 6 }}>{d.type}</td><td style={{ padding: 6, textAlign: "right" }}>{d.patients}</td><td style={{ padding: 6 }}>{d.billingMix}</td><td style={{ padding: 6, textAlign: "right" }}>{d.procedures}</td><td style={{ padding: 6, textAlign: "right", fontFamily: "var(--ff-mono)", color: "var(--c-accent)" }}>{fmtN(d.rvu)}</td></tr>)}</tbody>
+          </table>
+          <div style={{ marginTop: 8, fontSize: 12 }}>Weekly RVU: <strong>{fmtN(weeklyRVU)}</strong> · Annual from schedule: <strong>{fmtN(scheduleAnnualRVUComputed)}</strong> · Compare to target: <strong style={{ color: Math.abs(compareToTarget) < 1 ? "var(--c-accent3)" : "var(--c-danger)" }}>{fmtN(compareToTarget)}</strong></div>
+        </Card>
+
+        <Card title="7) Final Unified Report" accent="var(--c-accent)" style={{ marginTop: 14 }}>
+          <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+            <button onClick={() => window.print()} style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid var(--c-accent)", background: "rgba(34,211,238,.12)", color: "var(--c-accent)", cursor: "pointer" }}>Export PDF</button>
+            <button onClick={() => setStep(7)} style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid var(--c-border)", background: "var(--c-surface)", color: "var(--c-text)", cursor: "pointer" }}>Generate Report</button>
+          </div>
+          <div style={{ fontSize: 12, lineHeight: 1.7 }}>
+            <strong>Flow:</strong> salary → rvu → schedule → compensation<br />
+            <strong>Target Salary:</strong> {fmt(mode === "salary" ? targetSalary : computedSalary)}<br />
+            <strong>Required RVU:</strong> {fmtN(annualRVU)}<br />
+            <strong>Weekly Structure:</strong> Clinic {clinicDaysPerWeek}d / OR {orDaysPerWeek}d / Admin {adminTimePct}%<br />
+            <strong>Clinic Template:</strong> {fmtN(clinicPlanner.patientsNeeded)} pts/session · {fmtN(clinicPlanner.totalRvuPerPatient)} RVU/patient<br />
+            <strong>OR Template:</strong> {orPlanner.casesPerDay} cases/day · {fmtN(orPlanner.rvuPerOrDay)} RVU/day<br />
+            <strong>Final Compensation:</strong> {fmt(finalCompensation)}
+          </div>
+          <div style={{ marginTop: 8, padding: 8, borderRadius: 8, background: "var(--c-surface)", fontFamily: "var(--ff-mono)", fontSize: 11 }}>
+            Validation: schedule_rvu == required_rvu? {Math.abs(compareToTarget) < 1 ? "PASS" : "CHECK"} · rvu→compensation uses plan rate {fmt2(rate)} · compensation model preserved.
+          </div>
+        </Card>
+      </div>
+
+      <div style={{ position: "sticky", top: 94 }}>
+        <Card title="Sticky Summary Panel" accent="var(--c-accent3)">
+          <div style={{ display: "grid", gap: 8 }}>
+            <div style={{ display: "flex", justifyContent: "space-between" }}><span>Salary</span><strong>{fmt(mode === "salary" ? targetSalary : computedSalary)}</strong></div>
+            <div style={{ display: "flex", justifyContent: "space-between" }}><span>RVU</span><strong>{fmtN(annualRVU)}</strong></div>
+            <div style={{ display: "flex", justifyContent: "space-between" }}><span>Patients/day</span><strong>{Math.round(clinicPlanner.patientsNeeded * halfdaysPerDay)}</strong></div>
+            <div style={{ display: "flex", justifyContent: "space-between" }}><span>Cases/week</span><strong>{orPlanner.casesPerDay * orDaysPerWeek}</strong></div>
+          </div>
+        </Card>
+        <Card title="Visualizations" accent="var(--c-warn)" style={{ marginTop: 12 }}>
+          <div style={{ fontSize: 11, marginBottom: 6 }}>Stacked bar: Clinic RVU vs OR RVU</div>
+          <div style={{ height: 18, borderRadius: 999, overflow: "hidden", display: "flex", border: "1px solid var(--c-border)" }}>
+            <div style={{ width: `${(weeklyStructure.clinicWeekly / (weeklyRVU || 1)) * 100}%`, background: "var(--c-accent)" }} />
+            <div style={{ width: `${(weeklyStructure.orWeekly / (weeklyRVU || 1)) * 100}%`, background: "var(--c-accent3)" }} />
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--c-text-dim)" }}><span>Clinic {fmtN(weeklyStructure.clinicWeekly)}</span><span>OR {fmtN(weeklyStructure.orWeekly)}</span></div>
+          <div style={{ marginTop: 10, fontSize: 11 }}>Sensitivity slider: patients/day ({sensitivityPatients})</div>
+          <input type="range" min={8} max={50} value={sensitivityPatients} onChange={e => setSensitivityPatients(+e.target.value)} style={{ width: "100%", accentColor: "var(--c-warn)" }} />
+          <div style={{ marginTop: 10, fontSize: 11 }}>weekly_calendar_diagram</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 4, marginTop: 4 }}>{weeklySchedule.map((d) => <div key={d.day} style={{ padding: 4, borderRadius: 6, background: d.type === "Clinic" ? "rgba(34,211,238,.14)" : d.type === "OR" ? "rgba(52,211,153,.14)" : "var(--c-surface)", fontSize: 10, textAlign: "center" }}>{d.day}<br />{d.type}</div>)}</div>
+        </Card>
+        <Card title="wizardState" accent="var(--c-accent2)" style={{ marginTop: 12 }}>
+          <pre style={{ margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word", fontSize: 10, fontFamily: "var(--ff-mono)", color: "var(--c-text-dim)" }}>{JSON.stringify(wizardState, null, 2)}</pre>
+        </Card>
       </div>
     </div>
   );
