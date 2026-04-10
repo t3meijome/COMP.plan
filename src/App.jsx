@@ -1197,8 +1197,11 @@ function GuidedPlanningWizard({
   const computedSalary = nonProductivityIncome + annualRVU * rate;
 
   useEffect(() => {
-    setAnnualWRVU(Math.round(annualRVU));
-  }, [annualRVU, setAnnualWRVU]);
+    const roundedAnnualRVU = Math.round(annualRVU);
+    if (roundedAnnualRVU !== annualWRVU) {
+      setAnnualWRVU(roundedAnnualRVU);
+    }
+  }, [annualRVU, annualWRVU, setAnnualWRVU]);
 
   const rvuBreakdown = useMemo(() => {
     const monthly = annualRVU / 12;
