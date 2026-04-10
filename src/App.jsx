@@ -1110,6 +1110,44 @@ function VisitMixCalculator({ cptData, weeksWorked, clinicDaysPerWeek, rate }) {
   );
 }
 
+function WizardNumInput({ label, value, onChange, prefix = "", suffix = "", step = 1, min, max, small }) {
+  return (
+    <div style={{ marginBottom: small ? 8 : 14 }}>
+      <label style={{ fontSize: 12, color: "var(--c-text-dim)", display: "block", marginBottom: 3 }}>{label}</label>
+      <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+        {prefix && <span style={{ fontSize: 13, color: "var(--c-text-dim)" }}>{prefix}</span>}
+        <input
+          type="number"
+          value={value}
+          min={min}
+          max={max}
+          step={step}
+          onChange={e => onChange(+e.target.value)}
+          style={{
+            width: small ? 70 : 100, padding: "5px 8px", borderRadius: 6,
+            border: "1px solid var(--c-border)", background: "var(--c-surface)",
+            color: "var(--c-text)", fontSize: 14, fontFamily: "var(--ff-mono)"
+          }}
+        />
+        {suffix && <span style={{ fontSize: 13, color: "var(--c-text-dim)" }}>{suffix}</span>}
+      </div>
+    </div>
+  );
+}
+
+function WizardCard({ title, children, accent, style: s }) {
+  return (
+    <div style={{
+      background: "var(--c-card)", borderRadius: 12, padding: 20,
+      border: "1px solid var(--c-border)", position: "relative", overflow: "hidden", ...s
+    }}>
+      {accent && <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: accent }} />}
+      {title && <h3 style={{ fontSize: 14, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--c-text-dim)", marginBottom: 16 }}>{title}</h3>}
+      {children}
+    </div>
+  );
+}
+
 function GuidedPlanningWizard({
   comp, rate, cptData, weeksWorked, clinicDaysPerWeek, orDaysPerWeek,
   setWeeksWorked, setClinicDaysPerWeek, setOrDaysPerWeek,
@@ -1160,8 +1198,11 @@ function GuidedPlanningWizard({
   const computedSalary = nonProductivityIncome + annualRVU * rate;
 
   useEffect(() => {
-    setAnnualWRVU(Math.round(annualRVU));
-  }, [annualRVU, setAnnualWRVU]);
+    const roundedAnnualRVU = Math.round(annualRVU);
+    if (roundedAnnualRVU !== annualWRVU) {
+      setAnnualWRVU(roundedAnnualRVU);
+    }
+  }, [annualRVU, annualWRVU, setAnnualWRVU]);
 
   const rvuBreakdown = useMemo(() => {
     const monthly = annualRVU / 12;
@@ -1280,7 +1321,7 @@ function GuidedPlanningWizard({
           <div style={{ width: 220, height: 8, background: "var(--c-border)", borderRadius: 999 }}><div style={{ width: `${(step / steps.length) * 100}%`, height: "100%", background: "var(--c-accent)", borderRadius: 999 }} /></div>
         </div>
 
-        <Card title="Stepper Navigation" accent="var(--c-accent)">
+        <WizardCard title="Stepper Navigation" accent="var(--c-accent)">
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 8 }}>
             {steps.map((s, i) => <button key={s} onClick={() => setStep(i + 1)} style={{ padding: "8px", borderRadius: 8, border: `1px solid ${step === i + 1 ? "var(--c-accent)" : "var(--c-border)"}`, background: step === i + 1 ? "rgba(34,211,238,.12)" : "var(--c-surface)", color: "var(--c-text)", cursor: "pointer", fontSize: 12 }}>{i + 1}. {s}</button>)}
           </div>
@@ -1288,77 +1329,77 @@ function GuidedPlanningWizard({
             <button onClick={() => setStep(s => Math.max(1, s - 1))} style={{ padding: "8px 14px", borderRadius: 8, border: "1px solid var(--c-border)", background: "var(--c-surface)", color: "var(--c-text)", cursor: "pointer" }}>← Back</button>
             <button onClick={() => setStep(s => Math.min(steps.length, s + 1))} style={{ padding: "8px 14px", borderRadius: 8, border: "1px solid var(--c-accent)", background: "rgba(34,211,238,.12)", color: "var(--c-accent)", cursor: "pointer" }}>Next →</button>
           </div>
-        </Card>
+        </WizardCard>
 
-        <Card title="1) Target Compensation" accent="var(--c-accent2)" style={{ marginTop: 14 }}>
+        <WizardCard title="1) Target Compensation" accent="var(--c-accent2)" style={{ marginTop: 14 }}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10 }}>
-            <NumInput label="Target Salary" value={Math.round(mode === "salary" ? targetSalary : computedSalary)} onChange={setSalaryMode} prefix="$" min={0} />
-            <NumInput label="Annual RVU (Schedule→Salary)" value={Math.round(mode === "schedule" ? scheduleAnnualRVU : annualRVU)} onChange={setScheduleMode} min={0} />
+            <WizardNumInput label="Target Salary" value={Math.round(mode === "salary" ? targetSalary : computedSalary)} onChange={setSalaryMode} prefix="$" min={0} />
+            <WizardNumInput label="Annual RVU (Schedule→Salary)" value={Math.round(mode === "schedule" ? scheduleAnnualRVU : annualRVU)} onChange={setScheduleMode} min={0} />
             <div><label style={{ fontSize: 12, color: "var(--c-text-dim)", display: "block", marginBottom: 3 }}>Academic Rank</label><select value={rank} onChange={e => setRank(e.target.value)} style={{ width: "100%", padding: "8px", borderRadius: 8, border: "1px solid var(--c-border)", background: "var(--c-surface)", color: "var(--c-text)" }}><option value="assistant">Assistant</option><option value="associate">Associate</option><option value="professor">Professor</option></select></div>
-            <NumInput label="Call Participation (weeks)" value={callWeeks} onChange={setCallWeeks} min={0} />
-            <NumInput label="Quality Pool" value={qualityPoolTotal} onChange={setQualityPoolTotal} prefix="$" min={0} />
-            <NumInput label="Weeks Worked" value={weeksWorked} onChange={setWeeksWorked} min={20} max={52} />
-            <NumInput label="Clinic Days/Week" value={clinicDaysPerWeek} onChange={setClinicDaysPerWeek} min={0} max={5} />
-            <NumInput label="OR Days/Week" value={orDaysPerWeek} onChange={setOrDaysPerWeek} min={0} max={5} />
+            <WizardNumInput label="Call Participation (weeks)" value={callWeeks} onChange={setCallWeeks} min={0} />
+            <WizardNumInput label="Quality Pool" value={qualityPoolTotal} onChange={setQualityPoolTotal} prefix="$" min={0} />
+            <WizardNumInput label="Weeks Worked" value={weeksWorked} onChange={setWeeksWorked} min={20} max={52} />
+            <WizardNumInput label="Clinic Days/Week" value={clinicDaysPerWeek} onChange={setClinicDaysPerWeek} min={0} max={5} />
+            <WizardNumInput label="OR Days/Week" value={orDaysPerWeek} onChange={setOrDaysPerWeek} min={0} max={5} />
           </div>
           <div style={{ marginTop: 10, fontFamily: "var(--ff-mono)", fontSize: 12 }}>
             Non-Productivity Income: <strong>{fmt(nonProductivityIncome)}</strong> · Required Productivity Income: <strong>{fmt(Math.max(0, (mode === "salary" ? targetSalary : computedSalary) - nonProductivityIncome))}</strong> · Required RVU: <strong style={{ color: "var(--c-accent)" }}>{fmtN(annualRVU)}</strong>
           </div>
-        </Card>
+        </WizardCard>
 
-        <Card title="2) RVU Breakdown" accent="var(--c-accent3)" style={{ marginTop: 14 }}>
+        <WizardCard title="2) RVU Breakdown" accent="var(--c-accent3)" style={{ marginTop: 14 }}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 8 }}>
             {[{ l: "Annual", v: annualRVU }, { l: "Monthly", v: rvuBreakdown.monthly }, { l: "Weekly", v: rvuBreakdown.weekly }, { l: "Daily", v: rvuBreakdown.daily }, { l: "Halfday", v: rvuBreakdown.halfday }].map((x) => <div key={x.l} style={{ textAlign: "center", padding: 8, borderRadius: 8, background: "var(--c-surface)" }}><div style={{ fontSize: 18, fontWeight: 800, fontFamily: "var(--ff-mono)", color: "var(--c-accent)" }}>{fmtN(x.v)}</div><div style={{ fontSize: 11, color: "var(--c-text-dim)" }}>{x.l}</div></div>)}
           </div>
           <div style={{ marginTop: 10, fontFamily: "var(--ff-mono)", fontSize: 12, background: "var(--c-surface)", padding: 8, borderRadius: 8 }}>
             Required_RVU = (TargetSalary - NonProductivity) / ConversionFactor = ({fmt(mode === "salary" ? targetSalary : computedSalary)} - {fmt(nonProductivityIncome)}) / {fmt2(rate)} = {fmtN(annualRVU)}
           </div>
-        </Card>
+        </WizardCard>
 
-        <Card title="3) Weekly Structure" accent="var(--c-warn)" style={{ marginTop: 14 }}>
+        <WizardCard title="3) Weekly Structure" accent="var(--c-warn)" style={{ marginTop: 14 }}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 8 }}>
-            <NumInput label="Halfdays/Day" value={halfdaysPerDay} onChange={setHalfdaysPerDay} min={1} max={3} />
-            <NumInput label="Admin Time %" value={adminTimePct} onChange={setAdminTimePct} min={0} max={50} />
-            <NumInput label="Clinic RVU Share %" value={clinicSharePct} onChange={setClinicSharePct} min={20} max={90} />
+            <WizardNumInput label="Halfdays/Day" value={halfdaysPerDay} onChange={setHalfdaysPerDay} min={1} max={3} />
+            <WizardNumInput label="Admin Time %" value={adminTimePct} onChange={setAdminTimePct} min={0} max={50} />
+            <WizardNumInput label="Clinic RVU Share %" value={clinicSharePct} onChange={setClinicSharePct} min={20} max={90} />
           </div>
           <div style={{ fontSize: 12, marginTop: 8 }}>RVU/Clinic day: <strong>{fmtN(weeklyStructure.rvuPerClinicDay)}</strong> · RVU/OR day: <strong>{fmtN(weeklyStructure.rvuPerOrDay)}</strong> · RVU/Halfday: <strong>{fmtN(weeklyStructure.rvuPerHalfday)}</strong></div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 6, marginTop: 8 }}>
             {weeklySchedule.map((d) => <div key={d.day} style={{ border: "1px solid var(--c-border)", borderRadius: 8, padding: 8, background: "var(--c-surface)" }}><div style={{ fontWeight: 700 }}>{d.day}</div><div style={{ fontSize: 11, color: "var(--c-text-dim)" }}>{d.type}</div><div style={{ fontFamily: "var(--ff-mono)", color: "var(--c-accent)" }}>{fmtN(d.rvu)}</div></div>)}
           </div>
-        </Card>
+        </WizardCard>
 
-        <Card title="4) Clinic Session Planner" accent="var(--c-accent)" style={{ marginTop: 14 }}>
+        <WizardCard title="4) Clinic Session Planner" accent="var(--c-accent)" style={{ marginTop: 14 }}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 8 }}>
-            <NumInput label="% New" value={percentNew} onChange={(v) => { setPercentNew(v); setPercentReturn(100 - v); }} min={0} max={100} />
-            <NumInput label="% Return" value={percentReturn} onChange={(v) => { setPercentReturn(v); setPercentNew(100 - v); }} min={0} max={100} />
-            <NumInput label="L3 %" value={l3Mix} onChange={setL3Mix} min={0} max={100} />
-            <NumInput label="L4 %" value={l4Mix} onChange={setL4Mix} min={0} max={100} />
-            <NumInput label="L5 %" value={l5Mix} onChange={setL5Mix} min={0} max={100} />
-            <NumInput label="Clinic procedures/session" value={clinicProceduresPerSession} onChange={setClinicProceduresPerSession} min={0} />
-            <NumInput label="Custom procedures" value={customProcedureCount} onChange={setCustomProcedureCount} min={0} />
-            <NumInput label="Custom proc RVU" value={customProcedureRVU} onChange={setCustomProcedureRVU} step={0.1} min={0} />
+            <WizardNumInput label="% New" value={percentNew} onChange={(v) => { setPercentNew(v); setPercentReturn(100 - v); }} min={0} max={100} />
+            <WizardNumInput label="% Return" value={percentReturn} onChange={(v) => { setPercentReturn(v); setPercentNew(100 - v); }} min={0} max={100} />
+            <WizardNumInput label="L3 %" value={l3Mix} onChange={setL3Mix} min={0} max={100} />
+            <WizardNumInput label="L4 %" value={l4Mix} onChange={setL4Mix} min={0} max={100} />
+            <WizardNumInput label="L5 %" value={l5Mix} onChange={setL5Mix} min={0} max={100} />
+            <WizardNumInput label="Clinic procedures/session" value={clinicProceduresPerSession} onChange={setClinicProceduresPerSession} min={0} />
+            <WizardNumInput label="Custom procedures" value={customProcedureCount} onChange={setCustomProcedureCount} min={0} />
+            <WizardNumInput label="Custom proc RVU" value={customProcedureRVU} onChange={setCustomProcedureRVU} step={0.1} min={0} />
           </div>
           <div style={{ marginTop: 8, fontSize: 12 }}>RVU/patient: <strong>{fmtN(clinicPlanner.totalRvuPerPatient)}</strong> · Patients/session needed: <strong>{fmtN(clinicPlanner.patientsNeeded)}</strong> · RVU/session @ slider: <strong>{fmtN(clinicPlanner.rvuSession)}</strong></div>
           <div style={{ marginTop: 6, fontSize: 12, color: "var(--c-text-dim)" }}>Optimal clinic template: {Math.ceil(clinicPlanner.patientsNeeded * (percentNew / 100))} new + {Math.ceil(clinicPlanner.patientsNeeded * (percentReturn / 100))} return encounters/session.</div>
-        </Card>
+        </WizardCard>
 
-        <Card title="5) OR Planner" accent="var(--c-accent3)" style={{ marginTop: 14 }}>
+        <WizardCard title="5) OR Planner" accent="var(--c-accent3)" style={{ marginTop: 14 }}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 8 }}>
-            {Object.entries(surgeries).map(([k, v]) => <NumInput key={k} label={k} value={v} onChange={(n) => setSurgeries(prev => ({ ...prev, [k]: n }))} min={0} />)}
-            <NumInput label="Custom surgery RVU" value={customSurgeryRVU} onChange={setCustomSurgeryRVU} step={0.1} min={0} />
+            {Object.entries(surgeries).map(([k, v]) => <WizardNumInput key={k} label={k} value={v} onChange={(n) => setSurgeries(prev => ({ ...prev, [k]: n }))} min={0} />)}
+            <WizardNumInput label="Custom surgery RVU" value={customSurgeryRVU} onChange={setCustomSurgeryRVU} step={0.1} min={0} />
           </div>
           <div style={{ marginTop: 8, fontSize: 12 }}>RVU/OR Day: <strong>{fmtN(orPlanner.rvuPerOrDay)}</strong> · Cases/OR Day: <strong>{orPlanner.casesPerDay}</strong> · Optimal OR mix updates live from editable case counts/RVUs.</div>
-        </Card>
+        </WizardCard>
 
-        <Card title="6) Weekly Schedule Builder" accent="var(--c-accent2)" style={{ marginTop: 14 }}>
+        <WizardCard title="6) Weekly Schedule Builder" accent="var(--c-accent2)" style={{ marginTop: 14 }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
             <thead><tr style={{ borderBottom: "1px solid var(--c-border)" }}><th style={{ textAlign: "left", padding: 6 }}>Day</th><th style={{ textAlign: "left", padding: 6 }}>Clinic/OR</th><th style={{ textAlign: "right", padding: 6 }}>Patients</th><th style={{ textAlign: "left", padding: 6 }}>Billing Mix</th><th style={{ textAlign: "right", padding: 6 }}>Procedures</th><th style={{ textAlign: "right", padding: 6 }}>RVU</th></tr></thead>
             <tbody>{weeklySchedule.map((d) => <tr key={d.day} style={{ borderBottom: "1px solid var(--c-border)" }}><td style={{ padding: 6 }}>{d.day}</td><td style={{ padding: 6 }}>{d.type}</td><td style={{ padding: 6, textAlign: "right" }}>{d.patients}</td><td style={{ padding: 6 }}>{d.billingMix}</td><td style={{ padding: 6, textAlign: "right" }}>{d.procedures}</td><td style={{ padding: 6, textAlign: "right", fontFamily: "var(--ff-mono)", color: "var(--c-accent)" }}>{fmtN(d.rvu)}</td></tr>)}</tbody>
           </table>
           <div style={{ marginTop: 8, fontSize: 12 }}>Weekly RVU: <strong>{fmtN(weeklyRVU)}</strong> · Annual from schedule: <strong>{fmtN(scheduleAnnualRVUComputed)}</strong> · Compare to target: <strong style={{ color: Math.abs(compareToTarget) < 1 ? "var(--c-accent3)" : "var(--c-danger)" }}>{fmtN(compareToTarget)}</strong></div>
-        </Card>
+        </WizardCard>
 
-        <Card title="7) Final Unified Report" accent="var(--c-accent)" style={{ marginTop: 14 }}>
+        <WizardCard title="7) Final Unified Report" accent="var(--c-accent)" style={{ marginTop: 14 }}>
           <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
             <button onClick={() => window.print()} style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid var(--c-accent)", background: "rgba(34,211,238,.12)", color: "var(--c-accent)", cursor: "pointer" }}>Export PDF</button>
             <button onClick={() => setStep(7)} style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid var(--c-border)", background: "var(--c-surface)", color: "var(--c-text)", cursor: "pointer" }}>Generate Report</button>
@@ -1375,19 +1416,19 @@ function GuidedPlanningWizard({
           <div style={{ marginTop: 8, padding: 8, borderRadius: 8, background: "var(--c-surface)", fontFamily: "var(--ff-mono)", fontSize: 11 }}>
             Validation: schedule_rvu == required_rvu? {Math.abs(compareToTarget) < 1 ? "PASS" : "CHECK"} · rvu→compensation uses plan rate {fmt2(rate)} · compensation model preserved.
           </div>
-        </Card>
+        </WizardCard>
       </div>
 
       <div style={{ position: "sticky", top: 94 }}>
-        <Card title="Sticky Summary Panel" accent="var(--c-accent3)">
+        <WizardCard title="Sticky Summary Panel" accent="var(--c-accent3)">
           <div style={{ display: "grid", gap: 8 }}>
             <div style={{ display: "flex", justifyContent: "space-between" }}><span>Salary</span><strong>{fmt(mode === "salary" ? targetSalary : computedSalary)}</strong></div>
             <div style={{ display: "flex", justifyContent: "space-between" }}><span>RVU</span><strong>{fmtN(annualRVU)}</strong></div>
             <div style={{ display: "flex", justifyContent: "space-between" }}><span>Patients/day</span><strong>{Math.round(clinicPlanner.patientsNeeded * halfdaysPerDay)}</strong></div>
             <div style={{ display: "flex", justifyContent: "space-between" }}><span>Cases/week</span><strong>{orPlanner.casesPerDay * orDaysPerWeek}</strong></div>
           </div>
-        </Card>
-        <Card title="Visualizations" accent="var(--c-warn)" style={{ marginTop: 12 }}>
+        </WizardCard>
+        <WizardCard title="Visualizations" accent="var(--c-warn)" style={{ marginTop: 12 }}>
           <div style={{ fontSize: 11, marginBottom: 6 }}>Stacked bar: Clinic RVU vs OR RVU</div>
           <div style={{ height: 18, borderRadius: 999, overflow: "hidden", display: "flex", border: "1px solid var(--c-border)" }}>
             <div style={{ width: `${(weeklyStructure.clinicWeekly / (weeklyRVU || 1)) * 100}%`, background: "var(--c-accent)" }} />
@@ -1398,10 +1439,10 @@ function GuidedPlanningWizard({
           <input type="range" min={8} max={50} value={sensitivityPatients} onChange={e => setSensitivityPatients(+e.target.value)} style={{ width: "100%", accentColor: "var(--c-warn)" }} />
           <div style={{ marginTop: 10, fontSize: 11 }}>weekly_calendar_diagram</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 4, marginTop: 4 }}>{weeklySchedule.map((d) => <div key={d.day} style={{ padding: 4, borderRadius: 6, background: d.type === "Clinic" ? "rgba(34,211,238,.14)" : d.type === "OR" ? "rgba(52,211,153,.14)" : "var(--c-surface)", fontSize: 10, textAlign: "center" }}>{d.day}<br />{d.type}</div>)}</div>
-        </Card>
-        <Card title="wizardState" accent="var(--c-accent2)" style={{ marginTop: 12 }}>
+        </WizardCard>
+        <WizardCard title="wizardState" accent="var(--c-accent2)" style={{ marginTop: 12 }}>
           <pre style={{ margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word", fontSize: 10, fontFamily: "var(--ff-mono)", color: "var(--c-text-dim)" }}>{JSON.stringify(wizardState, null, 2)}</pre>
-        </Card>
+        </WizardCard>
       </div>
     </div>
   );
