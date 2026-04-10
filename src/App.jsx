@@ -63,6 +63,7 @@ const TABS = [
   { id: "charts", label: "Charts", icon: "📈" },
   { id: "wizard", label: "Guided Wizard", icon: "🧭" },
 ];
+const WORKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"];
 
 // ─── MAIN APP ────────────────────────────────────────────────────────────────
 export default function App() {
@@ -1466,13 +1467,46 @@ function GuidedPlanningWizard({
     return { rvuMap, casesPerDay, rvuPerOrDay };
   }, [cptData, surgeries, customSurgeryRVU]);
 
-  // Sync day types back to clinic/OR counts
+  const rebuildDayTypes = useCallback((clinicCount, orCount) => {
+    const safeClinicCount = Math.max(0, Math.min(5, Math.round(clinicCount || 0)));
+    const safeOrCount = Math.max(0, Math.min(5 - safeClinicCount, Math.round(orCount || 0)));
+    return Object.fromEntries(
+      WORKDAYS.map((day, idx) => {
+        if (idx < safeClinicCount) return [day, "Clinic"];
+        if (idx < safeClinicCount + safeOrCount) return [day, "OR"];
+        return [day, "Admin"];
+      })
+    );
+  }, []);
+
+  // Sync day types back to clinic/OR counts.
   useEffect(() => {
     const clinicCount = Object.values(dayTypes).filter(t => t === "Clinic").length;
     const orCount = Object.values(dayTypes).filter(t => t === "OR").length;
     if (clinicCount !== clinicDaysPerWeek) setClinicDaysPerWeek(clinicCount);
     if (orCount !== orDaysPerWeek) setOrDaysPerWeek(orCount);
   }, [dayTypes, clinicDaysPerWeek, orDaysPerWeek, setClinicDaysPerWeek, setOrDaysPerWeek]);
+
+  // Sync clinic/OR count edits back into the weekly schedule template.
+  useEffect(() => {
+    const target = rebuildDayTypes(clinicDaysPerWeek, orDaysPerWeek);
+    const isSame = WORKDAYS.every((day) => dayTypes[day] === target[day]);
+    if (!isSame) setDayTypes(target);
+  }, [clinicDaysPerWeek, orDaysPerWeek, dayTypes, rebuildDayTypes]);
+
+  const handleClinicDaysChange = (value) => {
+    const safeClinic = Math.max(0, Math.min(5, Math.round(value || 0)));
+    const safeOr = Math.max(0, Math.min(5 - safeClinic, Math.round(orDaysPerWeek || 0)));
+    setClinicDaysPerWeek(safeClinic);
+    if (safeOr !== orDaysPerWeek) setOrDaysPerWeek(safeOr);
+  };
+
+  const handleOrDaysChange = (value) => {
+    const safeOr = Math.max(0, Math.min(5, Math.round(value || 0)));
+    const safeClinic = Math.max(0, Math.min(5 - safeOr, Math.round(clinicDaysPerWeek || 0)));
+    setOrDaysPerWeek(safeOr);
+    if (safeClinic !== clinicDaysPerWeek) setClinicDaysPerWeek(safeClinic);
+  };
 
   const cycleDay = (day) => {
     const order = ["Clinic", "OR", "Admin"];
@@ -1576,8 +1610,8 @@ function GuidedPlanningWizard({
             <WizardNumInput label="Call Participation (weeks)" value={callWeeks} onChange={setCallWeeks} min={0} />
             <WizardNumInput label="Quality Pool" value={qualityPoolTotal} onChange={setQualityPoolTotal} prefix="$" min={0} />
             <WizardNumInput label="Weeks Worked" value={weeksWorked} onChange={setWeeksWorked} min={20} max={52} />
-            <WizardNumInput label="Clinic Days/Week" value={clinicDaysPerWeek} onChange={setClinicDaysPerWeek} min={0} max={5} />
-            <WizardNumInput label="OR Days/Week" value={orDaysPerWeek} onChange={setOrDaysPerWeek} min={0} max={5} />
+            <WizardNumInput label="Clinic Days/Week" value={clinicDaysPerWeek} onChange={handleClinicDaysChange} min={0} max={5} />
+            <WizardNumInput label="OR Days/Week" value={orDaysPerWeek} onChange={handleOrDaysChange} min={0} max={5} />
           </div>
           <div style={{ marginTop: 10, fontFamily: "var(--ff-mono)", fontSize: 12 }}>
             Non-Productivity Income: <strong>{fmt(nonProductivityIncome)}</strong> · Required Productivity Income: <strong>{fmt(Math.max(0, (mode === "salary" ? targetSalary : computedSalary) - nonProductivityIncome))}</strong> · Required RVU: <strong style={{ color: "var(--c-accent)" }}>{fmtN(annualRVU)}</strong>
