@@ -551,22 +551,22 @@ export default function App() {
 
               {/* Chair Lever Metrics — detailed rubric, full width */}
               <Card title="Chair Lever Metrics" accent="var(--c-warn)" style={{ gridColumn: "1 / -1" }}>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 16, marginBottom: 16 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 28, marginBottom: 28 }}>
                   <div>
-                    <p style={{ fontSize: 12, color: "var(--c-text-dim)", lineHeight: 1.7 }}>
-                      The chair retains <strong style={{ color: "var(--c-warn)" }}>19% of the compensation pool</strong> to be allocated across three academic mission levers: Education, Research, and Service/Citizenship. Each lever receives one-third of the 19% pool. The chair assigns each physician a score of 1–5 per lever; higher scores reduce payout. Compensation is divided equally among pool physicians.
+                    <p style={{ fontSize: 13, color: "var(--c-text-dim)", lineHeight: 1.8, marginBottom: 0 }}>
+                      The chair allocates <strong style={{ color: "var(--c-warn)" }}>19% of the pool</strong> across three levers — Education, Research, and Service/Citizenship — each receiving one-third. Physicians are scored 1–5 per lever; higher scores reduce payout.
                     </p>
-                    <div style={{ marginTop: 10, padding: "10px 12px", background: "var(--c-surface)", borderRadius: 8, fontFamily: "var(--ff-mono)", fontSize: 12, lineHeight: 1.9 }}>
+                    <div style={{ marginTop: 16, padding: "14px 16px", background: "var(--c-surface)", borderRadius: 8, fontFamily: "var(--ff-mono)", fontSize: 12, lineHeight: 2.1 }}>
                       <div><strong style={{ color: "var(--c-text)" }}>Per-lever share</strong> = (5 − score) ÷ 4 × (Pool × 19% ÷ 3)</div>
-                      <div style={{ color: "var(--c-text-dim)", marginTop: 4 }}>
+                      <div style={{ color: "var(--c-text-dim)" }}>
                         Score 1 → 100% · Score 2 → 75% · Score 3 → 50% · Score 4 → 25% · Score 5 → 0%
                       </div>
-                      <div style={{ borderTop: "1px solid var(--c-border)", marginTop: 6, paddingTop: 6 }}>
+                      <div style={{ borderTop: "1px solid var(--c-border)", marginTop: 8, paddingTop: 8 }}>
                         <strong style={{ color: "var(--c-accent)" }}>Phys Pay</strong> = sum of 3 lever shares ÷ pool physicians
                       </div>
                     </div>
                   </div>
-                  <div style={{ display: "grid", gap: 6 }}>
+                  <div style={{ display: "grid", gap: 10 }}>
                     {[
                       { score: 1, label: "Exceptional", bg: darkMode ? "rgba(5,150,105,.15)" : "#f0fdf4", border: "rgba(5,150,105,.4)", color: "#059669" },
                       { score: 2, label: "Above Expectations", bg: darkMode ? "rgba(8,145,178,.1)" : "#f0f9ff", border: "rgba(8,145,178,.3)", color: "var(--c-accent)" },
@@ -574,10 +574,10 @@ export default function App() {
                       { score: 4, label: "Below Expectations", bg: darkMode ? "rgba(217,119,6,.1)" : "#fffbeb", border: "rgba(217,119,6,.3)", color: "var(--c-warn)" },
                       { score: 5, label: "Little/No Contribution", bg: darkMode ? "rgba(220,38,38,.1)" : "#fef2f2", border: "rgba(220,38,38,.3)", color: "var(--c-danger)" },
                     ].map(s => (
-                      <div key={s.score} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 10px", borderRadius: 7, background: s.bg, border: `1px solid ${s.border}` }}>
-                        <span style={{ fontFamily: "var(--ff-mono)", fontWeight: 800, fontSize: 16, color: s.color, minWidth: 20, textAlign: "center" }}>{s.score}</span>
-                        <span style={{ fontSize: 12, fontWeight: 600, color: s.color }}>{s.label}</span>
-                        <span style={{ fontSize: 11, color: "var(--c-text-dim)", marginLeft: "auto", fontFamily: "var(--ff-mono)" }}>{((5 - s.score) / 4 * 100).toFixed(0)}% of lever</span>
+                      <div key={s.score} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", borderRadius: 8, background: s.bg, border: `1px solid ${s.border}` }}>
+                        <span style={{ fontFamily: "var(--ff-mono)", fontWeight: 800, fontSize: 17, color: s.color, minWidth: 22, textAlign: "center" }}>{s.score}</span>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: s.color }}>{s.label}</span>
+                        <span style={{ fontSize: 12, color: "var(--c-text-dim)", marginLeft: "auto", fontFamily: "var(--ff-mono)" }}>{((5 - s.score) / 4 * 100).toFixed(0)}% of lever</span>
                       </div>
                     ))}
                   </div>
@@ -588,10 +588,10 @@ export default function App() {
                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
                     <thead>
                       <tr style={{ background: "var(--c-surface)" }}>
-                        <th style={{ padding: "8px 12px", textAlign: "left", fontWeight: 700, color: "var(--c-text-dim)", textTransform: "uppercase", fontSize: 10, letterSpacing: 1, width: 60, borderBottom: "2px solid var(--c-border)" }}>Score</th>
-                        <th style={{ padding: "8px 12px", textAlign: "left", fontWeight: 700, color: "var(--c-accent2)", textTransform: "uppercase", fontSize: 10, letterSpacing: 1, borderBottom: "2px solid var(--c-border)" }}>Education</th>
-                        <th style={{ padding: "8px 12px", textAlign: "left", fontWeight: 700, color: "var(--c-accent3)", textTransform: "uppercase", fontSize: 10, letterSpacing: 1, borderBottom: "2px solid var(--c-border)" }}>Research</th>
-                        <th style={{ padding: "8px 12px", textAlign: "left", fontWeight: 700, color: "var(--c-warn)", textTransform: "uppercase", fontSize: 10, letterSpacing: 1, borderBottom: "2px solid var(--c-border)" }}>Service / Citizenship</th>
+                        <th style={{ padding: "10px 16px", textAlign: "left", fontWeight: 700, color: "var(--c-text-dim)", textTransform: "uppercase", fontSize: 10, letterSpacing: 1, width: 60, borderBottom: "2px solid var(--c-border)" }}>Score</th>
+                        <th style={{ padding: "10px 16px", textAlign: "left", fontWeight: 700, color: "var(--c-accent2)", textTransform: "uppercase", fontSize: 10, letterSpacing: 1, borderBottom: "2px solid var(--c-border)" }}>Education</th>
+                        <th style={{ padding: "10px 16px", textAlign: "left", fontWeight: 700, color: "var(--c-accent3)", textTransform: "uppercase", fontSize: 10, letterSpacing: 1, borderBottom: "2px solid var(--c-border)" }}>Research</th>
+                        <th style={{ padding: "10px 16px", textAlign: "left", fontWeight: 700, color: "var(--c-warn)", textTransform: "uppercase", fontSize: 10, letterSpacing: 1, borderBottom: "2px solid var(--c-border)" }}>Service / Citizenship</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -628,10 +628,10 @@ export default function App() {
                         },
                       ].map((row, i) => (
                         <tr key={row.score} style={{ borderBottom: "1px solid var(--c-border)", background: i % 2 === 0 ? "transparent" : "var(--c-surface)" }}>
-                          <td style={{ padding: "10px 12px", fontFamily: "var(--ff-mono)", fontWeight: 800, fontSize: 15, color: ["#059669","var(--c-accent)","var(--c-text-dim)","var(--c-warn)","var(--c-danger)"][i], verticalAlign: "top" }}>{row.score}</td>
-                          <td style={{ padding: "10px 12px", color: "var(--c-text)", lineHeight: 1.6, verticalAlign: "top" }}>{row.edu}</td>
-                          <td style={{ padding: "10px 12px", color: "var(--c-text)", lineHeight: 1.6, verticalAlign: "top" }}>{row.research}</td>
-                          <td style={{ padding: "10px 12px", color: "var(--c-text)", lineHeight: 1.6, verticalAlign: "top" }}>{row.service}</td>
+                          <td style={{ padding: "13px 16px", fontFamily: "var(--ff-mono)", fontWeight: 800, fontSize: 15, color: ["#059669","var(--c-accent)","var(--c-text-dim)","var(--c-warn)","var(--c-danger)"][i], verticalAlign: "top" }}>{row.score}</td>
+                          <td style={{ padding: "13px 16px", color: "var(--c-text)", lineHeight: 1.7, verticalAlign: "top" }}>{row.edu}</td>
+                          <td style={{ padding: "13px 16px", color: "var(--c-text)", lineHeight: 1.7, verticalAlign: "top" }}>{row.research}</td>
+                          <td style={{ padding: "13px 16px", color: "var(--c-text)", lineHeight: 1.7, verticalAlign: "top" }}>{row.service}</td>
                         </tr>
                       ))}
                     </tbody>
