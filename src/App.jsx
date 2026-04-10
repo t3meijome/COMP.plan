@@ -306,9 +306,8 @@ export default function App() {
 
       {/* TAB NAV */}
       <nav style={{
-        display: "flex", gap: 0, overflowX: "auto", borderBottom: "1px solid var(--c-border)",
+        display: "flex", gap: 0, flexWrap: "wrap", borderBottom: "1px solid var(--c-border)",
         background: "var(--c-card)", padding: "0 8px",
-        scrollbarWidth: "none", WebkitOverflowScrolling: "touch"
       }}>
         {TABS.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)} style={{
