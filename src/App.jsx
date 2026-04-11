@@ -198,19 +198,42 @@ export default function App() {
   }, [rateWaterfall.physRate, comp]);
 
   // ─── Slider input component ───
-  const Slider = ({ label, value, onChange, min, max, step = 1, prefix = "", suffix = "", fmt: fmtFn }) => (
-    <div style={{ marginBottom: 16 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-        <label style={{ fontSize: 13, color: "var(--c-text-dim)", fontWeight: 500 }}>{label}</label>
-        <span style={{ fontSize: 14, fontWeight: 700, color: "var(--c-accent)", fontFamily: "var(--ff-mono)" }}>
-          {prefix}{fmtFn ? fmtFn(value) : value}{suffix}
-        </span>
+  const Slider = ({ label, value, onChange, min, max, step = 1, prefix = "", suffix = "", fmt: fmtFn }) => {
+    const clamp = v => Math.min(max, Math.max(min, +parseFloat(v).toFixed(10)));
+    const btnStyle = {
+      width: 28, height: 28, borderRadius: 6, border: "1px solid var(--c-border)",
+      background: "var(--c-surface)", color: "var(--c-text)", fontSize: 18,
+      fontWeight: 700, cursor: "pointer", lineHeight: 1, flexShrink: 0,
+      display: "flex", alignItems: "center", justifyContent: "center", padding: 0,
+      transition: "none",
+    };
+    return (
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+          <label style={{ fontSize: 13, color: "var(--c-text-dim)", fontWeight: 500 }}>{label}</label>
+          <span style={{ fontSize: 14, fontWeight: 700, color: "var(--c-accent)", fontFamily: "var(--ff-mono)" }}>
+            {prefix}{fmtFn ? fmtFn(value) : value}{suffix}
+          </span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+          <button onClick={() => onChange(clamp(value - step))} style={btnStyle}>−</button>
+          <input
+            type="number" value={value} min={min} max={max} step={step}
+            onChange={e => { const v = +e.target.value; if (!isNaN(v)) onChange(clamp(v)); }}
+            style={{
+              flex: 1, padding: "4px 6px", borderRadius: 6, border: "1px solid var(--c-border)",
+              background: "var(--c-surface)", color: "var(--c-accent)", fontSize: 13,
+              fontFamily: "var(--ff-mono)", textAlign: "center", fontWeight: 700, minWidth: 0,
+            }}
+          />
+          <button onClick={() => onChange(clamp(value + step))} style={btnStyle}>+</button>
+        </div>
+        <input type="range" min={min} max={max} step={step} value={value}
+          onChange={e => onChange(+e.target.value)}
+          style={{ width: "100%", accentColor: "var(--c-accent)" }} />
       </div>
-      <input type="range" min={min} max={max} step={step} value={value}
-        onChange={e => onChange(+e.target.value)}
-        style={{ width: "100%", accentColor: "var(--c-accent)" }} />
-    </div>
-  );
+    );
+  };
 
   // ─── Number input ───
   const NumInput = ({ label, value, onChange, prefix = "", suffix = "", step = 1, min, max, small }) => (
@@ -839,6 +862,13 @@ export default function App() {
             <h2 style={{ fontSize: 20, fontWeight: 800, fontFamily: "var(--ff-display)", marginBottom: 20 }}>
               Session-Based Modeling
             </h2>
+
+            <Card title="Schedule Parameters" accent="var(--c-accent)" style={{ marginBottom: 16 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16 }}>
+                <Slider label="Weeks Worked" value={weeksWorked} onChange={setWeeksWorked} min={20} max={52} />
+                <Slider label="Clinic Days/Week" value={clinicDaysPerWeek} onChange={setClinicDaysPerWeek} min={1} max={5} />
+              </div>
+            </Card>
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16 }}>
               <Card title="Daily Visit Mix Builder" accent="var(--c-accent)">
