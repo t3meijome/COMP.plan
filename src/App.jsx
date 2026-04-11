@@ -1595,16 +1595,6 @@ function GuidedPlanningWizard({
     });
   };
 
-  const handleClinicDaysChange = (newClinic) => {
-    setClinicDaysPerWeek(newClinic);
-    setDayTypes(prev => rebuildDayTypes(prev, newClinic, orDaysPerWeek));
-  };
-
-  const handleOrDaysChange = (newOR) => {
-    setOrDaysPerWeek(newOR);
-    setDayTypes(prev => rebuildDayTypes(prev, clinicDaysPerWeek, newOR));
-  };
-
   const weeklySchedule = useMemo(() => {
     return ["Mon", "Tue", "Wed", "Thu", "Fri"].map(day => {
       const type = dayTypes[day];
